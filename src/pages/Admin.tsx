@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,11 @@ import {
   Check,
   User,
   Briefcase,
+  Mail,
+  Camera,
+  Upload,
+  MessageSquare,
+  Eye,
 } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -53,16 +58,29 @@ interface Project {
   created_at: string;
 }
 
+interface Message {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [adminPassword, setAdminPassword] = useState("");
   const [isAdminVerified, setIsAdminVerified] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -105,12 +123,19 @@ const Admin = () => {
       setLoading(false);
     });
 
+    // Load saved profile image URL from localStorage
+    const savedImageUrl = localStorage.getItem("profileImageUrl");
+    if (savedImageUrl) {
+      setProfileImageUrl(savedImageUrl);
+    }
+
     return () => subscription.unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
     if (session && isAdminVerified) {
       fetchProjects();
+      fetchMessages();
     }
   }, [session, isAdminVerified]);
 
@@ -137,6 +162,19 @@ const Admin = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setProjects(data || []);
+    }
+  };
+
+  const fetchMessages = async () => {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setMessages(data || []);
     }
   };
 
@@ -191,6 +229,27 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteMessage = async (id: string) => {
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Message deleted!" });
+      fetchMessages();
+    }
+  };
+
+  const handleMarkAsRead = async (id: string, read: boolean) => {
+    const { error } = await supabase.from("messages").update({ read: !read }).eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      fetchMessages();
+    }
+  };
+
   const handleEdit = (project: Project) => {
     setEditingProject(project);
     setFormData({
@@ -218,10 +277,55 @@ const Admin = () => {
     setEditingProject(null);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Error", description: "Please upload an image file", variant: "destructive" });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Error", description: "Image must be less than 5MB", variant: "destructive" });
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `profile-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(fileName);
+
+      setProfileImageUrl(urlData.publicUrl);
+      localStorage.setItem("profileImageUrl", urlData.publicUrl);
+      
+      toast({ title: "Success!", description: "Profile image updated successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
+
+  const unreadCount = messages.filter(m => !m.read).length;
 
   if (loading) {
     return (
@@ -298,10 +402,19 @@ const Admin = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 md:py-8">
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 md:mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-6 md:mb-8">
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Projects</span>
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2 relative">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Messages</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 sm:static sm:ml-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -494,6 +607,84 @@ const Admin = () => {
             )}
           </TabsContent>
 
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <div className="mb-6 md:mb-8">
+              <h2 className="text-xl md:text-2xl font-bold">Messages</h2>
+              <p className="text-sm text-muted-foreground">View messages from contact form</p>
+            </div>
+
+            {messages.length === 0 ? (
+              <div className="text-center py-12 md:py-16 glass rounded-2xl">
+                <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-full bg-muted flex items-center justify-center">
+                  <Mail className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg md:text-xl font-semibold mb-2">No Messages Yet</h3>
+                <p className="text-sm text-muted-foreground px-4">
+                  Messages from contact form will appear here
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`glass rounded-xl p-4 md:p-6 ${!msg.read ? 'border-l-4 border-primary' : ''}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold">{msg.name}</h3>
+                          {!msg.read && (
+                            <span className="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded-full">New</span>
+                          )}
+                        </div>
+                        <a href={`mailto:${msg.email}`} className="text-sm text-primary hover:underline">
+                          {msg.email}
+                        </a>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(msg.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4 whitespace-pre-wrap">{msg.message}</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleMarkAsRead(msg.id, msg.read)}>
+                        <Eye className="h-3 w-3 mr-1" />
+                        {msg.read ? 'Mark Unread' : 'Mark Read'}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="mx-4">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Message?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteMessage(msg.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           {/* Profile Tab */}
           <TabsContent value="profile">
             <div className="mb-6 md:mb-8">
@@ -502,6 +693,56 @@ const Admin = () => {
             </div>
 
             <div className="glass rounded-2xl p-4 md:p-6 space-y-6">
+              {/* Profile Image Upload */}
+              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6 pb-6 border-b border-border">
+                <div className="relative">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-primary/20">
+                    {profileImageUrl ? (
+                      <img 
+                        src={profileImageUrl} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                        <User className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {uploadingImage ? (
+                      <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </div>
+                <div className="text-center sm:text-left">
+                  <h3 className="font-semibold text-lg">{profileData.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{profileData.title}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploadingImage ? 'Uploading...' : 'Change Photo'}
+                  </Button>
+                </div>
+              </div>
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Full Name</Label>
@@ -605,7 +846,7 @@ const Admin = () => {
               <div className="bg-muted/50 rounded-lg p-4 mt-6">
                 <p className="text-xs text-muted-foreground">
                   <strong>Note:</strong> Profile data is stored in the codebase (src/lib/constants.ts). 
-                  To update your profile, modify the constants file directly or contact the developer.
+                  To update text fields, modify the constants file directly. Profile image can be changed above.
                 </p>
               </div>
             </div>
