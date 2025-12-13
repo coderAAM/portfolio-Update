@@ -5,6 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  message: z.string().trim().min(1, "Message is required").max(1000, "Message must be less than 1000 characters"),
+});
 
 export function Contact() {
   const { toast } = useToast();
@@ -14,21 +22,54 @@ export function Contact() {
     message: "",
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    
+    // Validate form data
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: { name?: string; email?: string; message?: string } = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as keyof typeof fieldErrors] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate sending (you can integrate with email service later)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Save message to database
+      const { error } = await supabase
+        .from("messages")
+        .insert([{
+          name: result.data.name,
+          email: result.data.email,
+          message: result.data.message,
+        }]);
 
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for reaching out. I'll get back to you soon!",
-    });
+      if (error) throw error;
 
-    setFormData({ name: "", email: "", message: "" });
-    setLoading(false);
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for reaching out. I'll get back to you soon!",
+      });
+
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -131,9 +172,9 @@ export function Contact() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Your name"
-                  required
-                  className="bg-background/50"
+                  className={`bg-background/50 ${errors.name ? 'border-destructive' : ''}`}
                 />
+                {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
               </div>
 
               <div>
@@ -146,9 +187,9 @@ export function Contact() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="your@email.com"
-                  required
-                  className="bg-background/50"
+                  className={`bg-background/50 ${errors.email ? 'border-destructive' : ''}`}
                 />
+                {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
               </div>
 
               <div>
@@ -161,9 +202,9 @@ export function Contact() {
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Your message..."
                   rows={5}
-                  required
-                  className="bg-background/50 resize-none"
+                  className={`bg-background/50 resize-none ${errors.message ? 'border-destructive' : ''}`}
                 />
+                {errors.message && <p className="text-destructive text-xs mt-1">{errors.message}</p>}
               </div>
 
               <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
