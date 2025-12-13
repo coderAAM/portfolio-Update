@@ -73,7 +73,7 @@ export const EDUCATION = [
 ];
 
 export const SOCIAL_LINKS = {
-  github: "https://github.com/ahmedali",
-  linkedin: "https://linkedin.com/in/ahmedali",
+  github: "https://github.com/coderAAM?tab=repositories",
+  linkedin: "https://www.linkedin.com/in/ahmed-ali-bbb274289/",
   twitter: "https://twitter.com/ahmedali",
 };
