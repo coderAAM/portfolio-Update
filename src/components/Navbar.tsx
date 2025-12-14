@@ -41,26 +41,26 @@ export function Navbar() {
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled ? "glass py-3" : "bg-transparent py-6"
+        scrolled ? "glass py-2 md:py-3" : "bg-transparent py-3 md:py-6"
       )}
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-3 md:px-4">
         <div className="flex items-center justify-between">
           <Link
             to="/"
-            className="flex items-center gap-2 text-xl font-bold text-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2 text-lg md:text-xl font-bold text-foreground hover:text-primary transition-colors"
           >
-            <Code2 className="h-6 w-6 text-primary" />
-            <span className="hidden sm:inline">Ahmed Ali</span>
+            <Code2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+            <span>Ahmed Ali</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
             {navLinks.map((link) => (
               <button
                 key={link.href}
                 onClick={() => handleNavClick(link.href)}
-                className="text-muted-foreground hover:text-primary transition-colors font-medium"
+                className="text-muted-foreground hover:text-primary transition-colors font-medium text-sm xl:text-base"
               >
                 {link.label}
               </button>
@@ -75,8 +75,9 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-foreground"
+            className="lg:hidden text-foreground p-2 -mr-2 hover:bg-primary/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -84,20 +85,20 @@ export function Navbar() {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 glass p-4 mt-2 mx-4 rounded-lg animate-fade-in">
-            <div className="flex flex-col gap-4">
+          <div className="lg:hidden fixed inset-x-0 top-[56px] bottom-0 bg-background/95 backdrop-blur-lg animate-fade-in overflow-y-auto">
+            <div className="flex flex-col p-4 gap-2">
               {navLinks.map((link) => (
                 <button
                   key={link.href}
                   onClick={() => handleNavClick(link.href)}
-                  className="text-muted-foreground hover:text-primary transition-colors font-medium text-left"
+                  className="text-foreground hover:text-primary hover:bg-primary/10 transition-colors font-medium text-left py-4 px-4 rounded-lg text-lg"
                 >
                   {link.label}
                 </button>
               ))}
-              <Link to="/admin" onClick={() => setIsOpen(false)}>
-                <Button variant="glass" size="sm" className="gap-2 w-full">
-                  <Shield className="h-4 w-4" />
+              <Link to="/admin" onClick={() => setIsOpen(false)} className="mt-4">
+                <Button variant="glass" size="lg" className="gap-2 w-full">
+                  <Shield className="h-5 w-5" />
                   Admin
                 </Button>
               </Link>
