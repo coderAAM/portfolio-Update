@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Github, Linkedin, Mail, MapPin, Phone, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
-import profileImage from "@/assets/ahmed-profile.jpg";
+import profileImage from "@/assets/ahmed-new-profile.png";
 
 export function Hero() {
   const [customImage, setCustomImage] = useState<string | null>(null);
