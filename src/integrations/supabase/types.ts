@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      experience: {
+        Row: {
+          company: string
+          created_at: string
+          description: string[]
+          id: string
+          period: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          description?: string[]
+          id?: string
+          period: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string[]
+          id?: string
+          period?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           created_at: string
@@ -38,6 +71,54 @@ export type Database = {
           message?: string
           name?: string
           read?: boolean
+        }
+        Relationships: []
+      }
+      profile_settings: {
+        Row: {
+          created_at: string
+          email: string
+          github_url: string | null
+          id: string
+          image_url: string | null
+          linkedin_url: string | null
+          location: string
+          name: string
+          phone: string
+          summary: string
+          title: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          github_url?: string | null
+          id?: string
+          image_url?: string | null
+          linkedin_url?: string | null
+          location: string
+          name: string
+          phone: string
+          summary: string
+          title: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          github_url?: string | null
+          id?: string
+          image_url?: string | null
+          linkedin_url?: string | null
+          location?: string
+          name?: string
+          phone?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
