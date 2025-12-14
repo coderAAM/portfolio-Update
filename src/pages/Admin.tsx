@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ADMIN_PASSWORD, PROFILE, SOCIAL_LINKS, SKILLS, EXPERIENCE, EDUCATION } from "@/lib/constants";
+import { ADMIN_PASSWORD, PROFILE, SOCIAL_LINKS, SKILLS, EDUCATION } from "@/lib/constants";
 import {
   Plus,
   Trash2,
@@ -22,6 +22,7 @@ import {
   Upload,
   MessageSquare,
   Eye,
+  Save,
 } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -67,6 +68,29 @@ interface Message {
   created_at: string;
 }
 
+interface ProfileSettings {
+  id?: string;
+  name: string;
+  title: string;
+  phone: string;
+  email: string;
+  website: string;
+  location: string;
+  summary: string;
+  github_url: string;
+  linkedin_url: string;
+  image_url: string;
+}
+
+interface Experience {
+  id: string;
+  title: string;
+  company: string;
+  period: string;
+  description: string[];
+  sort_order: number;
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -75,12 +99,17 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isExpDialogOpen, setIsExpDialogOpen] = useState(false);
+  const [isProfileEditMode, setIsProfileEditMode] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [adminPassword, setAdminPassword] = useState("");
   const [isAdminVerified, setIsAdminVerified] = useState(false);
-  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -91,16 +120,24 @@ const Admin = () => {
     featured: false,
   });
 
-  // Profile state (read-only display for now - stored in constants)
-  const [profileData] = useState({
+  const [expFormData, setExpFormData] = useState({
+    title: "",
+    company: "",
+    period: "",
+    description: "",
+  });
+
+  const [profileData, setProfileData] = useState<ProfileSettings>({
     name: PROFILE.name,
     title: PROFILE.title,
     email: PROFILE.email,
     phone: PROFILE.phone,
     location: PROFILE.location,
+    website: PROFILE.website || "",
     summary: PROFILE.summary,
-    github: SOCIAL_LINKS.github,
-    linkedin: SOCIAL_LINKS.linkedin,
+    github_url: SOCIAL_LINKS.github,
+    linkedin_url: SOCIAL_LINKS.linkedin,
+    image_url: "",
   });
 
   useEffect(() => {
@@ -123,12 +160,6 @@ const Admin = () => {
       setLoading(false);
     });
 
-    // Load saved profile image URL from localStorage
-    const savedImageUrl = localStorage.getItem("profileImageUrl");
-    if (savedImageUrl) {
-      setProfileImageUrl(savedImageUrl);
-    }
-
     return () => subscription.unsubscribe();
   }, [navigate]);
 
@@ -136,8 +167,48 @@ const Admin = () => {
     if (session && isAdminVerified) {
       fetchProjects();
       fetchMessages();
+      fetchProfileSettings();
+      fetchExperiences();
     }
   }, [session, isAdminVerified]);
+
+  const fetchProfileSettings = async () => {
+    const { data, error } = await supabase
+      .from("profile_settings")
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching profile:", error);
+    } else if (data) {
+      setProfileData({
+        id: data.id,
+        name: data.name,
+        title: data.title,
+        email: data.email,
+        phone: data.phone,
+        location: data.location,
+        website: data.website || "",
+        summary: data.summary,
+        github_url: data.github_url || "",
+        linkedin_url: data.linkedin_url || "",
+        image_url: data.image_url || "",
+      });
+    }
+  };
+
+  const fetchExperiences = async () => {
+    const { data, error } = await supabase
+      .from("experience")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching experiences:", error);
+    } else {
+      setExperiences(data || []);
+    }
+  };
 
   const verifyAdminPassword = () => {
     if (adminPassword === ADMIN_PASSWORD) {
@@ -218,6 +289,91 @@ const Admin = () => {
     setIsDialogOpen(false);
   };
 
+  const handleExpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const expData = {
+      title: expFormData.title,
+      company: expFormData.company,
+      period: expFormData.period,
+      description: expFormData.description.split("\n").filter(Boolean),
+      sort_order: editingExperience?.sort_order || experiences.length,
+    };
+
+    if (editingExperience) {
+      const { error } = await supabase
+        .from("experience")
+        .update(expData)
+        .eq("id", editingExperience.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Experience updated!" });
+        fetchExperiences();
+      }
+    } else {
+      const { error } = await supabase.from("experience").insert([expData]);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Experience added!" });
+        fetchExperiences();
+      }
+    }
+
+    resetExpForm();
+    setIsExpDialogOpen(false);
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    
+    const profilePayload = {
+      name: profileData.name,
+      title: profileData.title,
+      email: profileData.email,
+      phone: profileData.phone,
+      location: profileData.location,
+      website: profileData.website,
+      summary: profileData.summary,
+      github_url: profileData.github_url,
+      linkedin_url: profileData.linkedin_url,
+      image_url: profileData.image_url,
+    };
+
+    if (profileData.id) {
+      const { error } = await supabase
+        .from("profile_settings")
+        .update(profilePayload)
+        .eq("id", profileData.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Profile updated!" });
+        setIsProfileEditMode(false);
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("profile_settings")
+        .insert([profilePayload])
+        .select()
+        .single();
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setProfileData({ ...profileData, id: data.id });
+        toast({ title: "Profile saved!" });
+        setIsProfileEditMode(false);
+      }
+    }
+    
+    setSavingProfile(false);
+  };
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
 
@@ -226,6 +382,17 @@ const Admin = () => {
     } else {
       toast({ title: "Project deleted!" });
       fetchProjects();
+    }
+  };
+
+  const handleDeleteExp = async (id: string) => {
+    const { error } = await supabase.from("experience").delete().eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Experience deleted!" });
+      fetchExperiences();
     }
   };
 
@@ -264,6 +431,17 @@ const Admin = () => {
     setIsDialogOpen(true);
   };
 
+  const handleEditExp = (exp: Experience) => {
+    setEditingExperience(exp);
+    setExpFormData({
+      title: exp.title,
+      company: exp.company,
+      period: exp.period,
+      description: exp.description.join("\n"),
+    });
+    setIsExpDialogOpen(true);
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -277,17 +455,25 @@ const Admin = () => {
     setEditingProject(null);
   };
 
+  const resetExpForm = () => {
+    setExpFormData({
+      title: "",
+      company: "",
+      period: "",
+      description: "",
+    });
+    setEditingExperience(null);
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({ title: "Error", description: "Please upload an image file", variant: "destructive" });
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Error", description: "Image must be less than 5MB", variant: "destructive" });
       return;
@@ -299,7 +485,7 @@ const Admin = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `profile-${Date.now()}.${fileExt}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('profile-images')
         .upload(fileName, file, { upsert: true });
 
@@ -309,10 +495,10 @@ const Admin = () => {
         .from('profile-images')
         .getPublicUrl(fileName);
 
-      setProfileImageUrl(urlData.publicUrl);
+      setProfileData({ ...profileData, image_url: urlData.publicUrl });
       localStorage.setItem("profileImageUrl", urlData.publicUrl);
       
-      toast({ title: "Success!", description: "Profile image updated successfully" });
+      toast({ title: "Success!", description: "Profile image uploaded" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -380,19 +566,18 @@ const Admin = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="glass sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 md:py-4">
+        <div className="container mx-auto px-3 md:px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 md:gap-3">
-              <Code2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              <h1 className="text-lg md:text-xl font-bold">Admin Panel</h1>
+            <div className="flex items-center gap-2">
+              <Code2 className="h-5 w-5 text-primary" />
+              <h1 className="text-base md:text-xl font-bold">Admin</h1>
             </div>
-            <div className="flex items-center gap-2 md:gap-4">
-              <span className="text-xs md:text-sm text-muted-foreground hidden sm:inline truncate max-w-32 md:max-w-none">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground hidden sm:inline truncate max-w-24 md:max-w-none">
                 {session?.user?.email}
               </span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Logout</span>
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -400,23 +585,27 @@ const Admin = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 md:py-8">
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 md:mb-8">
-            <TabsTrigger value="projects" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-8 h-auto p-1">
+            <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Projects</span>
             </TabsTrigger>
-            <TabsTrigger value="messages" className="flex items-center gap-2 relative">
+            <TabsTrigger value="experience" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
+              <Briefcase className="h-4 w-4" />
+              <span className="hidden sm:inline">Experience</span>
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm relative">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Messages</span>
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 sm:static sm:ml-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
@@ -424,14 +613,14 @@ const Admin = () => {
 
           {/* Projects Tab */}
           <TabsContent value="projects">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h2 className="text-xl md:text-2xl font-bold">Projects</h2>
-                <p className="text-sm text-muted-foreground">Manage your portfolio projects</p>
+                <h2 className="text-lg md:text-2xl font-bold">Projects</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">Manage your portfolio projects</p>
               </div>
               <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
                 <DialogTrigger asChild>
-                  <Button variant="hero" className="w-full sm:w-auto">
+                  <Button variant="hero" size="sm" className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Project
                   </Button>
@@ -524,49 +713,48 @@ const Admin = () => {
               </Dialog>
             </div>
 
-            {/* Projects Grid */}
             {projects.length === 0 ? (
-              <div className="text-center py-12 md:py-16 glass rounded-2xl">
-                <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-full bg-muted flex items-center justify-center">
-                  <Plus className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+              <div className="text-center py-12 glass rounded-2xl">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <Plus className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-2">No Projects Yet</h3>
-                <p className="text-sm text-muted-foreground mb-4 md:mb-6 px-4">
+                <h3 className="text-lg font-semibold mb-2">No Projects Yet</h3>
+                <p className="text-sm text-muted-foreground mb-4 px-4">
                   Add your first project to showcase your work
                 </p>
-                <Button variant="hero" onClick={() => setIsDialogOpen(true)}>
+                <Button variant="hero" size="sm" onClick={() => setIsDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add First Project
                 </Button>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {projects.map((project) => (
                   <div key={project.id} className="glass rounded-xl overflow-hidden">
                     {project.image_url ? (
                       <img
                         src={project.image_url}
                         alt={project.title}
-                        className="w-full h-32 md:h-40 object-cover"
+                        className="w-full h-32 object-cover"
                       />
                     ) : (
-                      <div className="w-full h-32 md:h-40 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <Code2 className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground/50" />
+                      <div className="w-full h-32 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                        <Code2 className="h-8 w-8 text-muted-foreground/50" />
                       </div>
                     )}
-                    <div className="p-3 md:p-4">
+                    <div className="p-3">
                       <div className="flex items-start justify-between mb-2 gap-2">
-                        <h3 className="font-semibold text-sm md:text-base truncate">{project.title}</h3>
+                        <h3 className="font-semibold text-sm truncate">{project.title}</h3>
                         {project.featured && (
                           <span className="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded-full whitespace-nowrap">
                             Featured
                           </span>
                         )}
                       </div>
-                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-3">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
                         {project.description}
                       </p>
-                      <div className="flex flex-wrap gap-1 mb-3 md:mb-4">
+                      <div className="flex flex-wrap gap-1 mb-3">
                         {project.technologies.slice(0, 3).map((tech) => (
                           <span key={tech} className="text-xs px-2 py-0.5 bg-muted rounded">
                             {tech}
@@ -574,13 +762,13 @@ const Admin = () => {
                         ))}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(project)} className="flex-1 text-xs">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(project)} className="flex-1 text-xs h-8">
                           <Edit className="h-3 w-3 mr-1" />
                           Edit
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive" className="text-xs">
+                            <Button size="sm" variant="destructive" className="text-xs h-8">
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </AlertDialogTrigger>
@@ -588,7 +776,7 @@ const Admin = () => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Project?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete "{project.title}".
+                                This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -607,19 +795,158 @@ const Admin = () => {
             )}
           </TabsContent>
 
+          {/* Experience Tab */}
+          <TabsContent value="experience">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg md:text-2xl font-bold">Experience</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">Manage your work experience</p>
+              </div>
+              <Dialog open={isExpDialogOpen} onOpenChange={(open) => { setIsExpDialogOpen(open); if (!open) resetExpForm(); }}>
+                <DialogTrigger asChild>
+                  <Button variant="hero" size="sm" className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Experience
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto mx-4">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingExperience ? "Edit Experience" : "Add New Experience"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleExpSubmit} className="space-y-4 mt-4">
+                    <div>
+                      <Label htmlFor="exp_title">Job Title *</Label>
+                      <Input
+                        id="exp_title"
+                        value={expFormData.title}
+                        onChange={(e) => setExpFormData({ ...expFormData, title: e.target.value })}
+                        placeholder="Full Stack Developer"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="exp_company">Company *</Label>
+                      <Input
+                        id="exp_company"
+                        value={expFormData.company}
+                        onChange={(e) => setExpFormData({ ...expFormData, company: e.target.value })}
+                        placeholder="Company Name | Remote"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="exp_period">Period *</Label>
+                      <Input
+                        id="exp_period"
+                        value={expFormData.period}
+                        onChange={(e) => setExpFormData({ ...expFormData, period: e.target.value })}
+                        placeholder="Jan 2023 - Present"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="exp_description">Description (one point per line) *</Label>
+                      <Textarea
+                        id="exp_description"
+                        value={expFormData.description}
+                        onChange={(e) => setExpFormData({ ...expFormData, description: e.target.value })}
+                        placeholder="Developed web applications using React&#10;Built REST APIs with Node.js"
+                        rows={5}
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                      <Button type="submit" variant="hero" className="flex-1">
+                        <Check className="h-4 w-4 mr-2" />
+                        {editingExperience ? "Update" : "Add"} Experience
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => { setIsExpDialogOpen(false); resetExpForm(); }}>
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {experiences.length === 0 ? (
+              <div className="text-center py-12 glass rounded-2xl">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <Briefcase className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Experience Yet</h3>
+                <p className="text-sm text-muted-foreground mb-4 px-4">
+                  Add your work experience
+                </p>
+                <Button variant="hero" size="sm" onClick={() => setIsExpDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Experience
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {experiences.map((exp) => (
+                  <div key={exp.id} className="glass rounded-xl p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{exp.title}</h3>
+                        <p className="text-sm text-muted-foreground">{exp.company} • {exp.period}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEditExp(exp)} className="text-xs h-8">
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" className="text-xs h-8">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="mx-4">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Experience?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteExp(exp.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                      {exp.description.map((point, idx) => (
+                        <li key={idx}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           {/* Messages Tab */}
           <TabsContent value="messages">
-            <div className="mb-6 md:mb-8">
-              <h2 className="text-xl md:text-2xl font-bold">Messages</h2>
-              <p className="text-sm text-muted-foreground">View messages from contact form</p>
+            <div className="mb-6">
+              <h2 className="text-lg md:text-2xl font-bold">Messages</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">View messages from contact form</p>
             </div>
 
             {messages.length === 0 ? (
-              <div className="text-center py-12 md:py-16 glass rounded-2xl">
-                <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 rounded-full bg-muted flex items-center justify-center">
-                  <Mail className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+              <div className="text-center py-12 glass rounded-2xl">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <Mail className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold mb-2">No Messages Yet</h3>
+                <h3 className="text-lg font-semibold mb-2">No Messages Yet</h3>
                 <p className="text-sm text-muted-foreground px-4">
                   Messages from contact form will appear here
                 </p>
@@ -627,38 +954,32 @@ const Admin = () => {
             ) : (
               <div className="space-y-4">
                 {messages.map((msg) => (
-                  <div key={msg.id} className={`glass rounded-xl p-4 md:p-6 ${!msg.read ? 'border-l-4 border-primary' : ''}`}>
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                  <div key={msg.id} className={`glass rounded-xl p-4 ${!msg.read ? 'border-l-4 border-primary' : ''}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold">{msg.name}</h3>
+                          <h3 className="font-semibold text-sm">{msg.name}</h3>
                           {!msg.read && (
                             <span className="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded-full">New</span>
                           )}
                         </div>
-                        <a href={`mailto:${msg.email}`} className="text-sm text-primary hover:underline">
+                        <a href={`mailto:${msg.email}`} className="text-xs text-primary hover:underline">
                           {msg.email}
                         </a>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(msg.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {new Date(msg.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4 whitespace-pre-wrap">{msg.message}</p>
+                    <p className="text-sm text-muted-foreground mb-3 whitespace-pre-wrap">{msg.message}</p>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleMarkAsRead(msg.id, msg.read)}>
+                      <Button size="sm" variant="outline" onClick={() => handleMarkAsRead(msg.id, msg.read)} className="text-xs h-8">
                         <Eye className="h-3 w-3 mr-1" />
-                        {msg.read ? 'Mark Unread' : 'Mark Read'}
+                        {msg.read ? 'Unread' : 'Read'}
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
+                          <Button size="sm" variant="destructive" className="text-xs h-8">
                             <Trash2 className="h-3 w-3 mr-1" />
                             Delete
                           </Button>
@@ -687,25 +1008,43 @@ const Admin = () => {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <div className="mb-6 md:mb-8">
-              <h2 className="text-xl md:text-2xl font-bold">Profile Settings</h2>
-              <p className="text-sm text-muted-foreground">View and manage your profile information</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg md:text-2xl font-bold">Profile Settings</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">Manage your profile information</p>
+              </div>
+              {!isProfileEditMode ? (
+                <Button variant="hero" size="sm" onClick={() => setIsProfileEditMode(true)} className="w-full sm:w-auto">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              ) : (
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button variant="hero" size="sm" onClick={handleSaveProfile} disabled={savingProfile} className="flex-1 sm:flex-none">
+                    <Save className="h-4 w-4 mr-2" />
+                    {savingProfile ? "Saving..." : "Save"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setIsProfileEditMode(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="glass rounded-2xl p-4 md:p-6 space-y-6">
               {/* Profile Image Upload */}
-              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6 pb-6 border-b border-border">
+              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 pb-6 border-b border-border">
                 <div className="relative">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-primary/20">
-                    {profileImageUrl ? (
+                  <div className="w-20 h-20 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-primary/20">
+                    {profileData.image_url ? (
                       <img 
-                        src={profileImageUrl} 
+                        src={profileData.image_url} 
                         alt="Profile" 
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <User className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+                        <User className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -728,14 +1067,34 @@ const Admin = () => {
                     className="hidden"
                   />
                 </div>
-                <div className="text-center sm:text-left">
-                  <h3 className="font-semibold text-lg">{profileData.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{profileData.title}</p>
+                <div className="text-center sm:text-left flex-1">
+                  {isProfileEditMode ? (
+                    <div className="space-y-2">
+                      <Input
+                        value={profileData.name}
+                        onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                        placeholder="Full Name"
+                        className="font-semibold"
+                      />
+                      <Input
+                        value={profileData.title}
+                        onChange={(e) => setProfileData({ ...profileData, title: e.target.value })}
+                        placeholder="Job Title"
+                        className="text-sm"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-semibold text-lg">{profileData.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">{profileData.title}</p>
+                    </>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingImage}
+                    className="mt-2"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     {uploadingImage ? 'Uploading...' : 'Change Photo'}
@@ -743,112 +1102,152 @@ const Admin = () => {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground text-xs">Full Name</Label>
-                  <p className="font-medium mt-1">{profileData.name}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-xs">Title</Label>
-                  <p className="font-medium mt-1 text-sm">{profileData.title}</p>
-                </div>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground text-xs">Email</Label>
-                  <p className="font-medium mt-1">{profileData.email}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground text-xs">Phone</Label>
-                  <p className="font-medium mt-1">{profileData.phone}</p>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-muted-foreground text-xs">Location</Label>
-                <p className="font-medium mt-1">{profileData.location}</p>
-              </div>
-
-              <div>
-                <Label className="text-muted-foreground text-xs">Summary</Label>
-                <p className="font-medium mt-1 text-sm leading-relaxed">{profileData.summary}</p>
-              </div>
-
-              <div className="border-t border-border pt-4">
-                <h3 className="font-semibold mb-4">Social Links</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground text-xs">GitHub</Label>
-                    <a href={profileData.github} target="_blank" rel="noopener noreferrer" className="font-medium mt-1 text-sm text-primary hover:underline block truncate">
-                      {profileData.github}
-                    </a>
+              {isProfileEditMode ? (
+                <div className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Email</Label>
+                      <Input
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                        type="email"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Phone</Label>
+                      <Input
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Location</Label>
+                      <Input
+                        value={profileData.location}
+                        onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Website</Label>
+                      <Input
+                        value={profileData.website}
+                        onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                      />
+                    </div>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-xs">LinkedIn</Label>
-                    <a href={profileData.linkedin} target="_blank" rel="noopener noreferrer" className="font-medium mt-1 text-sm text-primary hover:underline block truncate">
-                      {profileData.linkedin}
-                    </a>
+                    <Label className="text-xs text-muted-foreground">Summary</Label>
+                    <Textarea
+                      value={profileData.summary}
+                      onChange={(e) => setProfileData({ ...profileData, summary: e.target.value })}
+                      rows={4}
+                    />
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">GitHub URL</Label>
+                      <Input
+                        value={profileData.github_url}
+                        onChange={(e) => setProfileData({ ...profileData, github_url: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">LinkedIn URL</Label>
+                      <Input
+                        value={profileData.linkedin_url}
+                        onChange={(e) => setProfileData({ ...profileData, linkedin_url: e.target.value })}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Email</Label>
+                      <p className="font-medium mt-1 text-sm">{profileData.email}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Phone</Label>
+                      <p className="font-medium mt-1 text-sm">{profileData.phone}</p>
+                    </div>
+                  </div>
 
-              <div className="border-t border-border pt-4">
-                <h3 className="font-semibold mb-4">Skills</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Location</Label>
+                      <p className="font-medium mt-1 text-sm">{profileData.location}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Website</Label>
+                      <p className="font-medium mt-1 text-sm">{profileData.website || "-"}</p>
+                    </div>
+                  </div>
+
                   <div>
-                    <Label className="text-muted-foreground text-xs">Languages & Frameworks</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {SKILLS.languages.map((skill) => (
-                        <span key={skill.name} className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                          {skill.name}
-                        </span>
+                    <Label className="text-muted-foreground text-xs">Summary</Label>
+                    <p className="font-medium mt-1 text-sm leading-relaxed">{profileData.summary}</p>
+                  </div>
+
+                  <div className="border-t border-border pt-4">
+                    <h3 className="font-semibold mb-4">Social Links</h3>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-muted-foreground text-xs">GitHub</Label>
+                        <a href={profileData.github_url} target="_blank" rel="noopener noreferrer" className="font-medium mt-1 text-sm text-primary hover:underline block truncate">
+                          {profileData.github_url || "-"}
+                        </a>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-xs">LinkedIn</Label>
+                        <a href={profileData.linkedin_url} target="_blank" rel="noopener noreferrer" className="font-medium mt-1 text-sm text-primary hover:underline block truncate">
+                          {profileData.linkedin_url || "-"}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-4">
+                    <h3 className="font-semibold mb-4">Skills</h3>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-muted-foreground text-xs">Languages & Frameworks</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {SKILLS.languages.map((skill) => (
+                            <span key={skill.name} className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+                              {skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-xs">Databases & Tools</Label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {SKILLS.databases.map((skill) => (
+                            <span key={skill.name} className="text-xs px-2 py-1 bg-accent/10 text-accent-foreground rounded-full">
+                              {skill.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-4">
+                    <h3 className="font-semibold mb-4">Education</h3>
+                    <div className="space-y-4">
+                      {EDUCATION.map((edu, index) => (
+                        <div key={index} className="border-l-2 border-accent pl-4">
+                          <h4 className="font-medium text-sm">{edu.degree}</h4>
+                          <p className="text-xs text-muted-foreground">{edu.institution} • {edu.period}</p>
+                        </div>
                       ))}
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Databases & Tools</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {SKILLS.databases.map((skill) => (
-                        <span key={skill.name} className="text-xs px-2 py-1 bg-accent/10 text-accent-foreground rounded-full">
-                          {skill.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4">
-                <h3 className="font-semibold mb-4">Experience</h3>
-                <div className="space-y-4">
-                  {EXPERIENCE.map((exp, index) => (
-                    <div key={index} className="border-l-2 border-primary pl-4">
-                      <h4 className="font-medium text-sm">{exp.title}</h4>
-                      <p className="text-xs text-muted-foreground">{exp.company} • {exp.period}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-4">
-                <h3 className="font-semibold mb-4">Education</h3>
-                <div className="space-y-4">
-                  {EDUCATION.map((edu, index) => (
-                    <div key={index} className="border-l-2 border-accent pl-4">
-                      <h4 className="font-medium text-sm">{edu.degree}</h4>
-                      <p className="text-xs text-muted-foreground">{edu.institution} • {edu.period}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-muted/50 rounded-lg p-4 mt-6">
-                <p className="text-xs text-muted-foreground">
-                  <strong>Note:</strong> Profile data is stored in the codebase (src/lib/constants.ts). 
-                  To update text fields, modify the constants file directly. Profile image can be changed above.
-                </p>
-              </div>
+                </>
+              )}
             </div>
           </TabsContent>
         </Tabs>
