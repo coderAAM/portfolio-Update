@@ -1,5 +1,3 @@
-export const ADMIN_PASSWORD = "ahmed@admin2024";
-
 export const PROFILE = {
   name: "Ahmed Ali Mughal",
   title: "MERN Stack / Full Stack / WordPress Developer",
