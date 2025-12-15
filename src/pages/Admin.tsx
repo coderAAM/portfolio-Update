@@ -105,7 +105,8 @@ const Admin = () => {
   const [isProfileEditMode, setIsProfileEditMode] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
-  const [isAdminVerified, setIsAdminVerified] = useState(true);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isAdminVerified, setIsAdminVerified] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   
@@ -209,7 +210,18 @@ const Admin = () => {
     }
   };
 
-
+  const verifyAdminPassword = () => {
+    if (adminPassword === "ahmed@admin2024") {
+      setIsAdminVerified(true);
+      toast({ title: "Access granted!", description: "Welcome to admin panel." });
+    } else {
+      toast({
+        title: "Invalid password",
+        description: "Please enter the correct admin password.",
+        variant: "destructive",
+      });
+    }
+  };
   const fetchProjects = async () => {
     const { data, error } = await supabase
       .from("projects")
@@ -508,6 +520,46 @@ const Admin = () => {
     );
   }
 
+  if (!isAdminVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden px-4">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-1/4 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl" />
+        </div>
+
+        <div className="w-full max-w-md">
+          <div className="glass rounded-2xl p-6 md:p-8 animate-scale-in">
+            <div className="text-center mb-6 md:mb-8">
+              <div className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-4 rounded-2xl bg-destructive/10 flex items-center justify-center">
+                <Lock className="h-7 w-7 md:h-8 md:w-8 text-destructive" />
+              </div>
+              <h1 className="text-xl md:text-2xl font-bold mb-2">Admin Access</h1>
+              <p className="text-muted-foreground text-sm">
+                Enter your admin password to continue
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <Input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Enter admin password"
+                onKeyDown={(e) => e.key === "Enter" && verifyAdminPassword()}
+              />
+              <Button variant="default" className="w-full" onClick={verifyAdminPassword}>
+                Verify Access
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={() => navigate("/")}>
+                Back to Portfolio
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
