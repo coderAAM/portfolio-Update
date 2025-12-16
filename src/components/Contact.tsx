@@ -73,23 +73,23 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="py-24 bg-muted/30">
+    <section id="contact" className="py-16 md:py-24 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-sm mb-2">{"<Contact />"}</p>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-10 md:mb-16 animate-fade-in">
+          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Contact />"}</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
             Get In <span className="text-gradient">Touch</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
             Have a project in mind or want to collaborate? Feel free to reach out!
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-12 max-w-5xl mx-auto">
           {/* Contact Info */}
-          <div className="space-y-8">
-            <div className="glass rounded-2xl p-8">
-              <h3 className="text-xl font-semibold mb-6">Contact Information</h3>
+          <div className="space-y-6 md:space-y-8">
+            <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8">
+              <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Contact Information</h3>
               
               <div className="space-y-6">
                 <a
@@ -159,8 +159,8 @@ export function Contact() {
           </div>
 
           {/* Contact Form */}
-          <div className="glass rounded-2xl p-8">
-            <h3 className="text-xl font-semibold mb-6">Send a Message</h3>
+          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8">
+            <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Send a Message</h3>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
