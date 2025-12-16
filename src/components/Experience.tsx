@@ -18,6 +18,22 @@ export function Experience() {
 
   useEffect(() => {
     fetchExperiences();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('experience-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'experience' },
+        () => {
+          fetchExperiences();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   async function fetchExperiences() {

@@ -2,17 +2,79 @@ import { useState, useEffect } from "react";
 import { Github, Linkedin, Mail, MapPin, Phone, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
 import profileImage from "@/assets/ahmed-new-profile.png";
 
+interface ProfileData {
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  location: string;
+  summary: string;
+  github_url: string | null;
+  linkedin_url: string | null;
+  image_url: string | null;
+}
+
 export function Hero() {
-  const [customImage, setCustomImage] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProfileData>({
+    name: PROFILE.name,
+    title: PROFILE.title,
+    email: PROFILE.email,
+    phone: PROFILE.phone,
+    location: PROFILE.location,
+    summary: PROFILE.summary,
+    github_url: SOCIAL_LINKS.github,
+    linkedin_url: SOCIAL_LINKS.linkedin,
+    image_url: null,
+  });
 
   useEffect(() => {
-    const savedImageUrl = localStorage.getItem("profileImageUrl");
-    if (savedImageUrl) {
-      setCustomImage(savedImageUrl);
-    }
+    fetchProfile();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profile_settings' },
+        () => {
+          fetchProfile();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  async function fetchProfile() {
+    try {
+      const { data, error } = await supabase
+        .from("profile_settings")
+        .select("*")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setProfile({
+          name: data.name,
+          title: data.title,
+          email: data.email,
+          phone: data.phone,
+          location: data.location,
+          summary: data.summary,
+          github_url: data.github_url,
+          linkedin_url: data.linkedin_url,
+          image_url: data.image_url,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  }
 
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
@@ -33,31 +95,31 @@ export function Hero() {
               </p>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 I'm{" "}
-                <span className="text-gradient">{PROFILE.name}</span>
+                <span className="text-gradient">{profile.name}</span>
               </h1>
               <div className="flex items-center gap-2 text-base md:text-lg lg:text-xl text-muted-foreground justify-center lg:justify-start">
                 <span className="w-8 md:w-12 h-0.5 bg-primary" />
-                <span className="font-medium">{PROFILE.title}</span>
+                <span className="font-medium">{profile.title}</span>
               </div>
             </div>
 
             <p className="text-muted-foreground text-sm md:text-base lg:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
-              {PROFILE.summary}
+              {profile.summary}
             </p>
 
             {/* Contact Info */}
             <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-muted-foreground justify-center lg:justify-start">
-              <a href={`mailto:${PROFILE.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+              <a href={`mailto:${profile.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Mail className="h-4 w-4" />
-                <span className="hidden sm:inline">{PROFILE.email}</span>
+                <span className="hidden sm:inline">{profile.email}</span>
               </a>
-              <a href={`tel:${PROFILE.phone}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+              <a href={`tel:${profile.phone}`} className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Phone className="h-4 w-4" />
-                <span className="hidden sm:inline">{PROFILE.phone}</span>
+                <span className="hidden sm:inline">{profile.phone}</span>
               </a>
               <span className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">{PROFILE.location}</span>
+                <span className="hidden sm:inline">{profile.location}</span>
               </span>
             </div>
 
@@ -74,22 +136,26 @@ export function Hero() {
 
             {/* Social Links */}
             <div className="flex gap-4 pt-2 md:pt-4 justify-center lg:justify-start">
-              <a
-                href={SOCIAL_LINKS.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 glass rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
-              >
-                <Github className="h-5 w-5" />
-              </a>
-              <a
-                href={SOCIAL_LINKS.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 glass rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a>
+              {profile.github_url && (
+                <a
+                  href={profile.github_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 glass rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
+                >
+                  <Github className="h-5 w-5" />
+                </a>
+              )}
+              {profile.linkedin_url && (
+                <a
+                  href={profile.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 glass rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
+                >
+                  <Linkedin className="h-5 w-5" />
+                </a>
+              )}
             </div>
           </div>
 
@@ -102,8 +168,8 @@ export function Hero() {
               {/* Image Container */}
               <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-primary/30 glow-primary">
                 <img
-                  src={customImage || profileImage}
-                  alt={PROFILE.name}
+                  src={profile.image_url || profileImage}
+                  alt={profile.name}
                   className="w-full h-full object-cover"
                 />
               </div>
