@@ -53,26 +53,26 @@ export function Experience() {
   }
 
   return (
-    <section id="experience" className="py-24 bg-muted/30">
+    <section id="experience" className="py-16 md:py-24 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-sm mb-2">{"<Experience />"}</p>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-10 md:mb-16 animate-fade-in">
+          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Experience />"}</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
             Professional <span className="text-gradient">Journey</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
             My career path and educational background that shaped me as a developer
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12">
           {/* Work Experience */}
           <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <Briefcase className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
+              <div className="p-2 md:p-3 bg-primary/10 rounded-lg md:rounded-xl">
+                <Briefcase className="h-5 w-5 md:h-6 md:w-6 text-primary" />
               </div>
-              <h3 className="text-2xl font-semibold">Work Experience</h3>
+              <h3 className="text-xl md:text-2xl font-semibold">Work Experience</h3>
             </div>
 
             {loading ? (
@@ -134,11 +134,11 @@ export function Experience() {
 
           {/* Education */}
           <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-3 bg-accent/10 rounded-xl">
-                <GraduationCap className="h-6 w-6 text-accent" />
+            <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
+              <div className="p-2 md:p-3 bg-accent/10 rounded-lg md:rounded-xl">
+                <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               </div>
-              <h3 className="text-2xl font-semibold">Education</h3>
+              <h3 className="text-xl md:text-2xl font-semibold">Education</h3>
             </div>
 
             <div className="space-y-6">
@@ -160,14 +160,14 @@ export function Experience() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <div className="glass rounded-xl p-6 text-center">
-                <div className="text-3xl font-bold text-primary mb-1">2+</div>
-                <div className="text-sm text-muted-foreground">Years Experience</div>
+            <div className="grid grid-cols-2 gap-3 md:gap-4 mt-6 md:mt-8">
+              <div className="glass rounded-lg md:rounded-xl p-4 md:p-6 text-center">
+                <div className="text-2xl md:text-3xl font-bold text-primary mb-1">2+</div>
+                <div className="text-xs md:text-sm text-muted-foreground">Years Experience</div>
               </div>
-              <div className="glass rounded-xl p-6 text-center">
-                <div className="text-3xl font-bold text-accent mb-1">20+</div>
-                <div className="text-sm text-muted-foreground">Projects Completed</div>
+              <div className="glass rounded-lg md:rounded-xl p-4 md:p-6 text-center">
+                <div className="text-2xl md:text-3xl font-bold text-accent mb-1">20+</div>
+                <div className="text-xs md:text-sm text-muted-foreground">Projects Completed</div>
               </div>
             </div>
           </div>

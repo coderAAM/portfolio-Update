@@ -14,26 +14,26 @@ const skillIcons = {
 
 export function Skills() {
   return (
-    <section id="skills" className="py-24 relative">
+    <section id="skills" className="py-16 md:py-24 relative">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-sm mb-2">{"<Skills />"}</p>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-10 md:mb-16 animate-fade-in">
+          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Skills />"}</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
             Technical <span className="text-gradient">Expertise</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
             A comprehensive toolkit of modern technologies for building exceptional web applications
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-8">
           {/* Languages & Frameworks */}
-          <div className="glass rounded-2xl p-8 hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <Code2 className="h-6 w-6 text-primary" />
+          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8 hover:scale-[1.02] transition-transform duration-300">
+            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <div className="p-2 md:p-3 bg-primary/10 rounded-lg md:rounded-xl">
+                <Code2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold">Languages & Frameworks</h3>
+              <h3 className="text-lg md:text-xl font-semibold">Languages & Frameworks</h3>
             </div>
             <div className="space-y-6">
               {SKILLS.languages.map((skill, index) => {
@@ -69,12 +69,12 @@ export function Skills() {
           </div>
 
           {/* Databases & Tools */}
-          <div className="glass rounded-2xl p-8 hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-accent/10 rounded-xl">
-                <Database className="h-6 w-6 text-accent" />
+          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8 hover:scale-[1.02] transition-transform duration-300">
+            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <div className="p-2 md:p-3 bg-accent/10 rounded-lg md:rounded-xl">
+                <Database className="h-5 w-5 md:h-6 md:w-6 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold">Databases & Tools</h3>
+              <h3 className="text-lg md:text-xl font-semibold">Databases & Tools</h3>
             </div>
             <div className="space-y-6">
               {SKILLS.databases.map((skill, index) => {
@@ -111,11 +111,11 @@ export function Skills() {
         </div>
 
         {/* Tech Stack Icons */}
-        <div className="mt-16 flex flex-wrap justify-center gap-6">
+        <div className="mt-10 md:mt-16 flex flex-wrap justify-center gap-2 md:gap-4">
           {["React", "Node.js", "MongoDB", "Express", "TypeScript", "Tailwind", "WordPress", "Git"].map((tech) => (
             <div
               key={tech}
-              className="px-6 py-3 glass rounded-full text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-all cursor-default"
+              className="px-3 py-2 md:px-6 md:py-3 glass rounded-full text-xs md:text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-all cursor-default"
             >
               {tech}
             </div>

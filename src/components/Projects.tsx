@@ -56,20 +56,20 @@ export function Projects() {
   }
 
   return (
-    <section id="projects" className="py-24">
+    <section id="projects" className="py-16 md:py-24">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-sm mb-2">{"<Projects />"}</p>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-10 md:mb-16 animate-fade-in">
+          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Projects />"}</p>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
             Featured <span className="text-gradient">Work</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
             A collection of projects that showcase my skills and passion for building
           </p>
         </div>
 
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {[1, 2, 3].map((i) => (
               <div key={i} className="glass rounded-2xl p-6 animate-pulse">
                 <div className="h-48 bg-muted rounded-xl mb-4" />
@@ -93,7 +93,7 @@ export function Projects() {
             </p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
             {projects.map((project, index) => (
               <div
                 key={project.id}
