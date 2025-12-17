@@ -41,8 +41,14 @@ export function NotificationBell() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [previousCount, setPreviousCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const triggerAnimation = () => {
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 1000);
+  };
 
   const fetchUnreadCount = async (playSound = false) => {
     const { count, error } = await supabase
@@ -53,6 +59,7 @@ export function NotificationBell() {
     if (!error && count !== null) {
       if (playSound && count > unreadCount) {
         playNotificationSound();
+        triggerAnimation();
       }
       setPreviousCount(unreadCount);
       setUnreadCount(count);
@@ -137,9 +144,18 @@ export function NotificationBell() {
         className="relative p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-primary/10"
         aria-label="Notifications"
       >
-        <Bell className="h-5 w-5" />
+        <Bell 
+          className={`h-5 w-5 transition-transform ${
+            isAnimating ? "animate-[bell-ring_0.5s_ease-in-out_2]" : ""
+          }`}
+          style={{
+            transformOrigin: "top center",
+          }}
+        />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+          <span className={`absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 ${
+            isAnimating ? "animate-[pulse_0.3s_ease-in-out_3]" : ""
+          }`}>
             {displayCount}
           </span>
         )}
