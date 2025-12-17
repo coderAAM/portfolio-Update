@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Code2, Shield } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Menu, X, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "./NotificationBell";
 
 const navLinks = [
   { href: "#about", label: "About" },
@@ -65,12 +65,7 @@ export function Navbar() {
                 {link.label}
               </button>
             ))}
-            <Link to="/admin">
-              <Button variant="glass" size="sm" className="gap-2">
-                <Shield className="h-4 w-4" />
-                Admin
-              </Button>
-            </Link>
+            <NotificationBell />
           </div>
 
           {/* Mobile Menu Button */}
@@ -96,12 +91,9 @@ export function Navbar() {
                   {link.label}
                 </button>
               ))}
-              <Link to="/admin" onClick={() => setIsOpen(false)} className="mt-4">
-                <Button variant="glass" size="lg" className="gap-2 w-full">
-                  <Shield className="h-5 w-5" />
-                  Admin
-                </Button>
-              </Link>
+              <div className="mt-4 px-4">
+                <NotificationBell />
+              </div>
             </div>
           </div>
         )}
