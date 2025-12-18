@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Github, Folder } from "lucide-react";
+import { ExternalLink, Github, Folder, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 interface Project {
   id: string;
@@ -93,91 +94,104 @@ export function Projects() {
             </p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {projects.map((project, index) => (
-              <div
-                key={project.id}
-                className="glass rounded-2xl overflow-hidden group hover:scale-[1.02] transition-all duration-300"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {/* Project Image */}
-                <div className="relative h-48 overflow-hidden">
-                  {project.image_url ? (
-                    <img
-                      src={project.image_url}
-                      alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                      <Folder className="h-16 w-16 text-muted-foreground/50" />
-                    </div>
-                  )}
-                  {project.featured && (
-                    <div className="absolute top-4 left-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                      Featured
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-
-                {/* Project Content */}
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                    {project.description}
-                  </p>
-
-                  {/* Technologies */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.technologies.slice(0, 4).map((tech) => (
-                      <span
-                        key={tech}
-                        className="px-2 py-1 text-xs bg-muted rounded-full text-muted-foreground"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                    {project.technologies.length > 4 && (
-                      <span className="px-2 py-1 text-xs bg-muted rounded-full text-muted-foreground">
-                        +{project.technologies.length - 4}
-                      </span>
+          <>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+              {projects.slice(0, 4).map((project, index) => (
+                <div
+                  key={project.id}
+                  className="glass rounded-2xl overflow-hidden group hover:scale-[1.02] transition-all duration-300"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  {/* Project Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    {project.image_url ? (
+                      <img
+                        src={project.image_url}
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                        <Folder className="h-16 w-16 text-muted-foreground/50" />
+                      </div>
                     )}
+                    {project.featured && (
+                      <div className="absolute top-4 left-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
+                        Featured
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
 
-                  {/* Links */}
-                  <div className="flex gap-3">
-                    {project.github_url && (
-                      <a
-                        href={project.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <Github className="h-4 w-4" />
-                          Code
-                        </Button>
-                      </a>
-                    )}
-                    {project.live_url && (
-                      <a
-                        href={project.live_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <ExternalLink className="h-4 w-4" />
-                          Live
-                        </Button>
-                      </a>
-                    )}
+                  {/* Project Content */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                      {project.title}
+                    </h3>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                      {project.description}
+                    </p>
+
+                    {/* Technologies */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.technologies.slice(0, 4).map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-1 text-xs bg-muted rounded-full text-muted-foreground"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {project.technologies.length > 4 && (
+                        <span className="px-2 py-1 text-xs bg-muted rounded-full text-muted-foreground">
+                          +{project.technologies.length - 4}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Links */}
+                    <div className="flex gap-3">
+                      {project.github_url && (
+                        <a
+                          href={project.github_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <Github className="h-4 w-4" />
+                            Code
+                          </Button>
+                        </a>
+                      )}
+                      {project.live_url && (
+                        <a
+                          href={project.live_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <ExternalLink className="h-4 w-4" />
+                            Live
+                          </Button>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            
+            {projects.length > 4 && (
+              <div className="text-center mt-10">
+                <Link to="/projects">
+                  <Button variant="outline" size="lg" className="gap-2">
+                    View All Projects
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </section>
