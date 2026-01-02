@@ -8,17 +8,21 @@ import { Footer } from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import InstallPWA from "@/components/InstallPWA";
 import { useEffect } from "react";
+import { usePageVisit } from "@/hooks/usePageVisit";
 
 const Index = () => {
+  // Track page visits
+  usePageVisit("/");
+
   useEffect(() => {
     // Set dark mode by default
     document.documentElement.classList.add("dark");
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
-      <main>
+      <main className="overflow-x-hidden">
         <Hero />
         <Skills />
         <Experience />

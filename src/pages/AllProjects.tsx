@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { usePageVisit } from "@/hooks/usePageVisit";
 
 interface Project {
   id: string;
@@ -20,6 +21,9 @@ interface Project {
 export default function AllProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Track page visits
+  usePageVisit("/projects");
 
   useEffect(() => {
     fetchProjects();
@@ -58,9 +62,9 @@ export default function AllProjects() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
-      <main className="pt-20">
+      <main className="pt-20 overflow-x-hidden">
         <section className="py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="mb-8">
