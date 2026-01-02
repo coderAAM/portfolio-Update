@@ -23,7 +23,9 @@ import {
   MessageSquare,
   Eye,
   Save,
+  TrendingUp,
 } from "lucide-react";
+import { VisitorGraph } from "@/components/admin/VisitorGraph";
 import { Session } from "@supabase/supabase-js";
 import {
   Dialog,
@@ -562,7 +564,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
       <header className="glass sticky top-0 z-50">
         <div className="container mx-auto px-3 md:px-4 py-3">
@@ -586,7 +588,7 @@ const Admin = () => {
       {/* Main Content */}
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4 md:mb-8 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-5 mb-4 md:mb-8 h-auto p-1">
             <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Projects</span>
@@ -603,6 +605,10 @@ const Admin = () => {
                   {unreadCount}
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="profile" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
               <User className="h-4 w-4" />
@@ -1003,6 +1009,15 @@ const Admin = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <div className="mb-6">
+              <h2 className="text-lg md:text-2xl font-bold">Visitor Analytics</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">Track your website visitors</p>
+            </div>
+            <VisitorGraph />
           </TabsContent>
 
           {/* Profile Tab */}
