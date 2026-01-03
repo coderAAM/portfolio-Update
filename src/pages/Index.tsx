@@ -7,6 +7,7 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import InstallPWA from "@/components/InstallPWA";
+import { AIChatbot } from "@/components/AIChatbot";
 import { useEffect } from "react";
 import { usePageVisit } from "@/hooks/usePageVisit";
 
@@ -32,6 +33,7 @@ const Index = () => {
       <Footer />
       <ThemeToggle />
       <InstallPWA />
+      <AIChatbot />
     </div>
   );
 };
