@@ -24,7 +24,9 @@ import {
   Eye,
   Save,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
+import { AIContentSuggestion } from "@/components/AIContentSuggestion";
 import { VisitorGraph } from "@/components/admin/VisitorGraph";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -647,7 +649,13 @@ const Admin = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="description">Description *</Label>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label htmlFor="description">Description *</Label>
+                        <AIContentSuggestion
+                          currentTitle={formData.title}
+                          onSuggestion={(suggestion) => setFormData({ ...formData, description: suggestion })}
+                        />
+                      </div>
                       <Textarea
                         id="description"
                         value={formData.description}
