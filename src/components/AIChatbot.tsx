@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAIChat } from "@/hooks/useAIChat";
@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export const AIChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const { messages, isLoading, sendMessage } = useAIChat("chatbot");
+  const { messages, isLoading, sendMessage, clearMessages, isInitialized } = useAIChat("chatbot");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,6 +27,10 @@ export const AIChatbot = () => {
     } catch (error) {
       console.error("Failed to send message:", error);
     }
+  };
+
+  const handleNewChat = () => {
+    clearMessages();
   };
 
   return (
@@ -52,25 +56,47 @@ export const AIChatbot = () => {
         )}
       >
         {/* Header */}
-        <div className="bg-primary p-4 flex items-center gap-3">
-          <div className="p-2 bg-primary-foreground/10 rounded-full">
-            <Bot className="h-5 w-5 text-primary-foreground" />
+        <div className="bg-primary p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-foreground/10 rounded-full">
+              <Bot className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-primary-foreground">AI Assistant</h3>
+              <p className="text-xs text-primary-foreground/70">Ask me anything</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-primary-foreground">AI Assistant</h3>
-            <p className="text-xs text-primary-foreground/70">Ask me anything</p>
-          </div>
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNewChat}
+              className="text-primary-foreground hover:bg-primary-foreground/10"
+              title="Start new chat"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Messages */}
         <div className="h-[300px] overflow-y-auto p-4 space-y-4 bg-background">
-          {messages.length === 0 && (
+          {!isInitialized ? (
+            <div className="text-center text-muted-foreground text-sm py-8">
+              <div className="flex gap-1 justify-center">
+                <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+              <p className="mt-2">Loading conversation...</p>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="text-center text-muted-foreground text-sm py-8">
               <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Hi! How can I help you today?</p>
               <p className="text-xs mt-1">Ask about projects, skills, or experience</p>
             </div>
-          )}
+          ) : null}
           
           {messages.map((msg, idx) => (
             <div
@@ -128,10 +154,10 @@ export const AIChatbot = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a message..."
-              disabled={isLoading}
+              disabled={isLoading || !isInitialized}
               className="flex-1"
             />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+            <Button type="submit" size="icon" disabled={isLoading || !input.trim() || !isInitialized}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
