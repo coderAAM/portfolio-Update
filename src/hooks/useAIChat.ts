@@ -1,12 +1,96 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
+// Get or create a visitor ID
+const getVisitorId = (): string => {
+  let visitorId = localStorage.getItem("chatbot_visitor_id");
+  if (!visitorId) {
+    visitorId = crypto.randomUUID();
+    localStorage.setItem("chatbot_visitor_id", visitorId);
+  }
+  return visitorId;
+};
+
 export const useAIChat = (type: "chatbot" | "suggestion" = "chatbot") => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load existing conversation on mount
+  useEffect(() => {
+    if (type !== "chatbot") {
+      setIsInitialized(true);
+      return;
+    }
+
+    const loadConversation = async () => {
+      const visitorId = getVisitorId();
+      
+      // Try to find existing conversation
+      const { data: conversations } = await supabase
+        .from("chat_conversations")
+        .select("id")
+        .eq("visitor_id", visitorId)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+
+      if (conversations && conversations.length > 0) {
+        const convId = conversations[0].id;
+        setConversationId(convId);
+        
+        // Load messages
+        const { data: msgs } = await supabase
+          .from("chat_messages")
+          .select("role, content")
+          .eq("conversation_id", convId)
+          .order("created_at", { ascending: true });
+
+        if (msgs) {
+          setMessages(msgs.map(m => ({ role: m.role as "user" | "assistant", content: m.content })));
+        }
+      }
+      
+      setIsInitialized(true);
+    };
+
+    loadConversation();
+  }, [type]);
+
+  // Create or get conversation
+  const ensureConversation = async (): Promise<string> => {
+    if (conversationId) return conversationId;
+
+    const visitorId = getVisitorId();
+    
+    const { data, error } = await supabase
+      .from("chat_conversations")
+      .insert({ visitor_id: visitorId })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    
+    setConversationId(data.id);
+    return data.id;
+  };
+
+  // Save message to database
+  const saveMessage = async (convId: string, role: "user" | "assistant", content: string) => {
+    await supabase
+      .from("chat_messages")
+      .insert({ conversation_id: convId, role, content });
+    
+    // Update conversation timestamp
+    await supabase
+      .from("chat_conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", convId);
+  };
 
   const sendMessage = useCallback(async (input: string): Promise<string> => {
     const userMsg: Message = { role: "user", content: input };
@@ -20,6 +104,13 @@ export const useAIChat = (type: "chatbot" | "suggestion" = "chatbot") => {
     let assistantContent = "";
 
     try {
+      // Save user message to database
+      let convId: string | null = null;
+      if (type === "chatbot") {
+        convId = await ensureConversation();
+        await saveMessage(convId, "user", input);
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -103,6 +194,11 @@ export const useAIChat = (type: "chatbot" | "suggestion" = "chatbot") => {
         }
       }
 
+      // Save assistant message to database
+      if (type === "chatbot" && convId && assistantContent) {
+        await saveMessage(convId, "assistant", assistantContent);
+      }
+
       return assistantContent;
     } catch (error) {
       console.error("AI chat error:", error);
@@ -110,11 +206,16 @@ export const useAIChat = (type: "chatbot" | "suggestion" = "chatbot") => {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, type]);
+  }, [messages, type, conversationId]);
 
-  const clearMessages = useCallback(() => {
+  const clearMessages = useCallback(async () => {
     setMessages([]);
-  }, []);
+    
+    // Create a new conversation
+    if (type === "chatbot") {
+      setConversationId(null);
+    }
+  }, [type]);
 
-  return { messages, isLoading, sendMessage, clearMessages };
+  return { messages, isLoading, sendMessage, clearMessages, isInitialized };
 };
