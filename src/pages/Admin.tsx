@@ -32,6 +32,7 @@ import {
 import { AIContentSuggestion } from "@/components/AIContentSuggestion";
 import { AIExperienceSuggestion } from "@/components/AIExperienceSuggestion";
 import { VisitorGraph } from "@/components/admin/VisitorGraph";
+import { SortableExperienceItem } from "@/components/admin/SortableExperienceItem";
 import { Session } from "@supabase/supabase-js";
 import {
   Dialog,
@@ -54,6 +55,21 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface Project {
   id: string;
@@ -471,6 +487,41 @@ const Admin = () => {
     } else {
       toast({ title: "Experience deleted!" });
       fetchExperiences();
+    }
+  };
+
+  // Drag and drop sensors and handler for experiences
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = experiences.findIndex((exp) => exp.id === active.id);
+      const newIndex = experiences.findIndex((exp) => exp.id === over.id);
+
+      const newOrder = arrayMove(experiences, oldIndex, newIndex);
+      setExperiences(newOrder);
+
+      // Update sort_order in database
+      const updates = newOrder.map((exp, index) => ({
+        id: exp.id,
+        sort_order: index,
+      }));
+
+      for (const update of updates) {
+        await supabase
+          .from("experience")
+          .update({ sort_order: update.sort_order })
+          .eq("id", update.id);
+      }
+
+      toast({ title: "Order updated!" });
     }
   };
 
@@ -986,50 +1037,27 @@ const Admin = () => {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {experiences.map((exp) => (
-                  <div key={exp.id} className="glass rounded-xl p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{exp.title}</h3>
-                        <p className="text-sm text-muted-foreground">{exp.company} • {exp.period}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEditExp(exp)} className="text-xs h-8">
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive" className="text-xs h-8">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="mx-4">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Experience?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteExp(exp.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      {exp.description.map((point, idx) => (
-                        <li key={idx}>{point}</li>
-                      ))}
-                    </ul>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={experiences.map((exp) => exp.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-4">
+                    {experiences.map((exp) => (
+                      <SortableExperienceItem
+                        key={exp.id}
+                        experience={exp}
+                        onEdit={handleEditExp}
+                        onDelete={handleDeleteExp}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
           </TabsContent>
 
