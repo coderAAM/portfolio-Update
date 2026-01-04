@@ -30,6 +30,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { AIContentSuggestion } from "@/components/AIContentSuggestion";
+import { AIExperienceSuggestion } from "@/components/AIExperienceSuggestion";
 import { VisitorGraph } from "@/components/admin/VisitorGraph";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -938,7 +939,14 @@ const Admin = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="exp_description">Description (one point per line) *</Label>
+                      <div className="flex items-center justify-between mb-1">
+                        <Label htmlFor="exp_description">Description (one point per line) *</Label>
+                        <AIExperienceSuggestion
+                          jobTitle={expFormData.title}
+                          company={expFormData.company}
+                          onSuggestion={(suggestion) => setExpFormData({ ...expFormData, description: suggestion })}
+                        />
+                      </div>
                       <Textarea
                         id="exp_description"
                         value={expFormData.description}

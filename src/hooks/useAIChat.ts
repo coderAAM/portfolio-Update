@@ -15,7 +15,7 @@ const getVisitorId = (): string => {
   return visitorId;
 };
 
-export const useAIChat = (type: "chatbot" | "suggestion" = "chatbot") => {
+export const useAIChat = (type: "chatbot" | "suggestion" | "experience" = "chatbot") => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
