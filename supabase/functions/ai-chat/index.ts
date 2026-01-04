@@ -25,6 +25,11 @@ serve(async (req) => {
       Generate engaging, professional project descriptions based on the user's input. 
       Keep descriptions concise (2-3 sentences), highlight key features, and make them appealing to potential clients or employers.
       Focus on the impact and value of the project.`;
+    } else if (type === "experience") {
+      systemPrompt = `You are a professional resume and career content writer.
+      Generate compelling, action-oriented bullet points for work experience descriptions.
+      Use strong action verbs, quantify achievements where possible, and focus on impact.
+      Keep each point concise and professional, suitable for a portfolio or resume.`;
     } else if (type === "chatbot") {
       systemPrompt = `You are Ahmed's AI assistant on his portfolio website. 
       You help visitors learn about Ahmed's skills, projects, and experience.
