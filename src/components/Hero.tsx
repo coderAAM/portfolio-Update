@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import profileImage from "@/assets/ahmed-new-profile.png";
+import { CVDownload } from "@/components/CVDownload";
 
 interface ProfileData {
   name: string;
@@ -129,6 +130,7 @@ export function Hero() {
                 View Projects
                 <ExternalLink className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
+              <CVDownload />
               <Button variant="heroOutline" size="lg" className="text-sm md:text-base" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
                 Contact Me
               </Button>

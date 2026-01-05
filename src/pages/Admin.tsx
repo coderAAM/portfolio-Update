@@ -33,6 +33,7 @@ import { AIContentSuggestion } from "@/components/AIContentSuggestion";
 import { AIExperienceSuggestion } from "@/components/AIExperienceSuggestion";
 import { VisitorGraph } from "@/components/admin/VisitorGraph";
 import { SortableExperienceItem } from "@/components/admin/SortableExperienceItem";
+import { ChatExport } from "@/components/admin/ChatExport";
 import { Session } from "@supabase/supabase-js";
 import {
   Dialog,
@@ -1135,9 +1136,12 @@ const Admin = () => {
 
           {/* Chatbot Tab */}
           <TabsContent value="chatbot">
-            <div className="mb-6">
-              <h2 className="text-lg md:text-2xl font-bold">Chatbot Conversations</h2>
-              <p className="text-xs md:text-sm text-muted-foreground">View and manage AI chatbot conversations</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg md:text-2xl font-bold">Chatbot Conversations</h2>
+                <p className="text-xs md:text-sm text-muted-foreground">View and manage AI chatbot conversations</p>
+              </div>
+              <ChatExport conversations={chatConversations} />
             </div>
 
             {chatConversations.length === 0 ? (
