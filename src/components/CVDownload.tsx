@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PROFILE, SKILLS, EDUCATION, SOCIAL_LINKS } from "@/lib/constants";
+import { CV_TEMPLATES, CVData } from "@/lib/cv-templates";
 import html2pdf from "html2pdf.js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProfileData {
   name: string;
@@ -23,6 +30,12 @@ interface Experience {
   description: string[];
 }
 
+interface Skill {
+  name: string;
+  level: string;
+  category: string;
+}
+
 export function CVDownload() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
@@ -36,6 +49,7 @@ export function CVDownload() {
     linkedin_url: SOCIAL_LINKS.linkedin,
   });
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -68,83 +82,43 @@ export function CVDownload() {
     if (expData) {
       setExperiences(expData);
     }
+
+    // Fetch skills from database or use constants as fallback
+    const { data: skillsData } = await supabase
+      .from("skills")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (skillsData && skillsData.length > 0) {
+      setSkills(skillsData);
+    } else {
+      // Use constants as fallback
+      const fallbackSkills = [
+        ...SKILLS.languages.map(s => ({ ...s, category: "languages" })),
+        ...SKILLS.databases.map(s => ({ ...s, category: "databases" })),
+      ];
+      setSkills(fallbackSkills);
+    }
   };
 
-  const generatePDF = async () => {
+  const generatePDF = async (templateId: string) => {
     setLoading(true);
 
-    // Create a hidden container for the CV content
+    const template = CV_TEMPLATES.find(t => t.id === templateId);
+    if (!template) {
+      setLoading(false);
+      return;
+    }
+
+    const cvData: CVData = {
+      ...profile,
+      experiences,
+      skills,
+      education: EDUCATION,
+    };
+
     const container = document.createElement("div");
-    container.innerHTML = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; color: #333; padding: 30px; background: #fff;">
-        <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #6366f1;">
-          <h1 style="font-size: 28px; font-weight: 700; color: #1e1b4b; margin: 0 0 5px 0;">${profile.name}</h1>
-          <p style="font-size: 16px; color: #6366f1; font-weight: 500; margin: 0 0 12px 0;">${profile.title}</p>
-          <div style="font-size: 12px; color: #666;">
-            <span style="margin-right: 15px;">📧 ${profile.email}</span>
-            <span style="margin-right: 15px;">📱 ${profile.phone}</span>
-            <span>📍 ${profile.location}</span>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 16px; font-weight: 700; color: #1e1b4b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; letter-spacing: 1px;">Professional Summary</h2>
-          <p style="color: #4b5563; text-align: justify; font-size: 13px; margin: 0;">${profile.summary}</p>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 16px; font-weight: 700; color: #1e1b4b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; letter-spacing: 1px;">Experience</h2>
-          ${experiences.map((exp) => `
-            <div style="margin-bottom: 15px;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px;">
-                <div>
-                  <div style="font-weight: 600; color: #1e1b4b; font-size: 14px;">${exp.title}</div>
-                  <div style="color: #6366f1; font-size: 13px;">${exp.company}</div>
-                </div>
-                <div style="color: #9ca3af; font-size: 12px; font-style: italic;">${exp.period}</div>
-              </div>
-              <ul style="padding-left: 18px; margin: 5px 0 0 0;">
-                ${exp.description.map((desc) => `<li style="color: #4b5563; margin-bottom: 3px; font-size: 12px;">${desc}</li>`).join("")}
-              </ul>
-            </div>
-          `).join("")}
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 16px; font-weight: 700; color: #1e1b4b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; letter-spacing: 1px;">Skills</h2>
-          <div style="display: flex; gap: 30px;">
-            <div style="flex: 1;">
-              <h4 style="font-weight: 600; color: #1e1b4b; margin-bottom: 6px; font-size: 13px;">Languages & Frameworks</h4>
-              <ul style="list-style: none; padding: 0; margin: 0;">
-                ${SKILLS.languages.map((s) => `<li style="color: #4b5563; font-size: 12px; margin-bottom: 3px;">• ${s.name} (${s.level})</li>`).join("")}
-              </ul>
-            </div>
-            <div style="flex: 1;">
-              <h4 style="font-weight: 600; color: #1e1b4b; margin-bottom: 6px; font-size: 13px;">Databases & Tools</h4>
-              <ul style="list-style: none; padding: 0; margin: 0;">
-                ${SKILLS.databases.map((s) => `<li style="color: #4b5563; font-size: 12px; margin-bottom: 3px;">• ${s.name} (${s.level})</li>`).join("")}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <h2 style="font-size: 16px; font-weight: 700; color: #1e1b4b; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #e5e7eb; text-transform: uppercase; letter-spacing: 1px;">Education</h2>
-          ${EDUCATION.map((edu) => `
-            <div style="margin-bottom: 10px;">
-              <div style="font-weight: 600; color: #1e1b4b; font-size: 13px;">${edu.degree}</div>
-              <div style="color: #6366f1; font-size: 12px;">${edu.institution}</div>
-              <div style="color: #9ca3af; font-size: 11px;">${edu.period}</div>
-            </div>
-          `).join("")}
-        </div>
-
-        <div style="margin-top: 15px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 12px;">
-          ${profile.github_url ? `<a href="${profile.github_url}" style="color: #6366f1; text-decoration: none; margin-right: 20px;">GitHub</a>` : ""}
-          ${profile.linkedin_url ? `<a href="${profile.linkedin_url}" style="color: #6366f1; text-decoration: none;">LinkedIn</a>` : ""}
-        </div>
-      </div>
-    `;
+    container.innerHTML = template.generate(cvData);
 
     const options = {
       margin: 10,
@@ -164,15 +138,34 @@ export function CVDownload() {
   };
 
   return (
-    <Button 
-      variant="hero" 
-      size="lg" 
-      onClick={generatePDF} 
-      disabled={loading}
-      className="text-sm md:text-base"
-    >
-      <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-      {loading ? "Generating..." : "Download CV"}
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="hero" 
+          size="lg" 
+          disabled={loading}
+          className="text-sm md:text-base"
+        >
+          <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+          {loading ? "Generating..." : "Download CV"}
+          <ChevronDown className="h-4 w-4 ml-2" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" className="w-56">
+        {CV_TEMPLATES.map((template) => (
+          <DropdownMenuItem
+            key={template.id}
+            onClick={() => generatePDF(template.id)}
+            className="cursor-pointer"
+          >
+            <span className="mr-2">{template.preview}</span>
+            <div className="flex flex-col">
+              <span className="font-medium">{template.name}</span>
+              <span className="text-xs text-muted-foreground">{template.description}</span>
+            </div>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
