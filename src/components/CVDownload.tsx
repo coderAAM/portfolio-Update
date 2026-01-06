@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, ChevronDown } from "lucide-react";
+import { FileText, ChevronDown, Download, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PROFILE, SKILLS, EDUCATION, SOCIAL_LINKS } from "@/lib/constants";
 import { CV_TEMPLATES, CVData } from "@/lib/cv-templates";
@@ -11,6 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ProfileData {
   name: string;
@@ -38,6 +44,9 @@ interface Skill {
 
 export function CVDownload() {
   const [loading, setLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState("");
   const [profile, setProfile] = useState<ProfileData>({
     name: PROFILE.name,
     title: PROFILE.title,
@@ -83,7 +92,6 @@ export function CVDownload() {
       setExperiences(expData);
     }
 
-    // Fetch skills from database or use constants as fallback
     const { data: skillsData } = await supabase
       .from("skills")
       .select("*")
@@ -92,7 +100,6 @@ export function CVDownload() {
     if (skillsData && skillsData.length > 0) {
       setSkills(skillsData);
     } else {
-      // Use constants as fallback
       const fallbackSkills = [
         ...SKILLS.languages.map(s => ({ ...s, category: "languages" })),
         ...SKILLS.databases.map(s => ({ ...s, category: "databases" })),
@@ -101,24 +108,34 @@ export function CVDownload() {
     }
   };
 
-  const generatePDF = async (templateId: string) => {
+  const getCVData = (): CVData => ({
+    ...profile,
+    experiences,
+    skills,
+    education: EDUCATION,
+  });
+
+  const openPreview = (templateId: string) => {
+    const template = CV_TEMPLATES.find(t => t.id === templateId);
+    if (!template) return;
+    
+    setSelectedTemplate(templateId);
+    setPreviewHtml(template.generate(getCVData()));
+    setPreviewOpen(true);
+  };
+
+  const generatePDF = async () => {
+    if (!selectedTemplate) return;
     setLoading(true);
 
-    const template = CV_TEMPLATES.find(t => t.id === templateId);
+    const template = CV_TEMPLATES.find(t => t.id === selectedTemplate);
     if (!template) {
       setLoading(false);
       return;
     }
 
-    const cvData: CVData = {
-      ...profile,
-      experiences,
-      skills,
-      education: EDUCATION,
-    };
-
     const container = document.createElement("div");
-    container.innerHTML = template.generate(cvData);
+    container.innerHTML = template.generate(getCVData());
 
     const options = {
       margin: 10,
@@ -135,37 +152,65 @@ export function CVDownload() {
     }
 
     setLoading(false);
+    setPreviewOpen(false);
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant="hero" 
-          size="lg" 
-          disabled={loading}
-          className="text-sm md:text-base"
-        >
-          <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-          {loading ? "Generating..." : "Download CV"}
-          <ChevronDown className="h-4 w-4 ml-2" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-56">
-        {CV_TEMPLATES.map((template) => (
-          <DropdownMenuItem
-            key={template.id}
-            onClick={() => generatePDF(template.id)}
-            className="cursor-pointer"
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="hero" 
+            size="lg" 
+            className="text-sm md:text-base"
           >
-            <span className="mr-2">{template.preview}</span>
-            <div className="flex flex-col">
-              <span className="font-medium">{template.name}</span>
-              <span className="text-xs text-muted-foreground">{template.description}</span>
-            </div>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+            Download CV
+            <ChevronDown className="h-4 w-4 ml-2" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" className="w-56">
+          {CV_TEMPLATES.map((template) => (
+            <DropdownMenuItem
+              key={template.id}
+              onClick={() => openPreview(template.id)}
+              className="cursor-pointer"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              <div className="flex flex-col">
+                <span className="font-medium">{template.name}</span>
+                <span className="text-xs text-muted-foreground">{template.description}</span>
+              </div>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center justify-between">
+              <span>CV Preview - {CV_TEMPLATES.find(t => t.id === selectedTemplate)?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto bg-muted/50 rounded-lg p-4">
+            <div 
+              className="bg-white mx-auto shadow-lg"
+              style={{ maxWidth: "210mm" }}
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-4 flex-shrink-0">
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={generatePDF} disabled={loading}>
+              <Download className="h-4 w-4 mr-2" />
+              {loading ? "Generating..." : "Download PDF"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
