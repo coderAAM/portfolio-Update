@@ -1,7 +1,8 @@
-import { SKILLS } from "@/lib/constants";
 import { Code2, Database, Palette, Server } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const skillIcons = {
+const skillIcons: Record<string, typeof Code2> = {
   JavaScript: Code2,
   "React & Redux": Code2,
   "Node.js & Express": Server,
@@ -10,9 +11,30 @@ const skillIcons = {
   "Tailwind CSS": Palette,
   "HTML/CSS": Palette,
   WordPress: Code2,
+  MongoDB: Database,
+  PostgreSQL: Database,
+  MySQL: Database,
+  Git: Code2,
+  Docker: Server,
+  AWS: Server,
 };
 
 export function Skills() {
+  const { data: skills = [] } = useQuery({
+    queryKey: ["skills"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("skills")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const languageSkills = skills.filter((s) => s.category === "languages");
+  const databaseSkills = skills.filter((s) => s.category === "databases");
+
   return (
     <section id="skills" className="py-16 md:py-24 relative">
       <div className="container mx-auto px-4">
@@ -36,7 +58,7 @@ export function Skills() {
               <h3 className="text-lg md:text-xl font-semibold">Languages & Frameworks</h3>
             </div>
             <div className="space-y-6">
-              {SKILLS.languages.map((skill, index) => {
+              {languageSkills.map((skill, index) => {
                 const Icon = skillIcons[skill.name as keyof typeof skillIcons] || Code2;
                 return (
                   <div key={skill.name} className="space-y-2" style={{ animationDelay: `${index * 0.1}s` }}>
@@ -77,7 +99,7 @@ export function Skills() {
               <h3 className="text-lg md:text-xl font-semibold">Databases & Tools</h3>
             </div>
             <div className="space-y-6">
-              {SKILLS.databases.map((skill, index) => {
+              {databaseSkills.map((skill, index) => {
                 const Icon = skillIcons[skill.name as keyof typeof skillIcons] || Database;
                 return (
                   <div key={skill.name} className="space-y-2" style={{ animationDelay: `${index * 0.1}s` }}>
