@@ -10,7 +10,6 @@ import { Session } from "@supabase/supabase-js";
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [formData, setFormData] = useState({
@@ -45,28 +44,12 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-        if (error) throw error;
-        toast({ title: "Welcome back!", description: "Successfully logged in." });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
-        if (error) throw error;
-        toast({ 
-          title: "Account created!", 
-          description: "You can now log in to manage projects." 
-        });
-        setIsLogin(true);
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (error) throw error;
+      toast({ title: "Welcome back!", description: "Successfully logged in." });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -77,7 +60,6 @@ const Auth = () => {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
@@ -104,17 +86,13 @@ const Auth = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
               <Code2 className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">
-              {isLogin ? "Welcome Back" : "Create Account"}
-            </h1>
+            <h1 className="text-2xl font-bold mb-2">Admin Login</h1>
             <p className="text-muted-foreground text-sm">
-              {isLogin
-                ? "Sign in to manage your portfolio"
-                : "Sign up to start managing projects"}
+              Sign in to manage your portfolio
             </p>
           </div>
 
-          {/* Email Form */}
+          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -157,25 +135,13 @@ const Auth = () => {
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {isLogin ? "Signing in..." : "Creating account..."}
+                  Signing in...
                 </>
               ) : (
-                isLogin ? "Sign In" : "Create Account"
+                "Sign In"
               )}
             </Button>
           </form>
-
-          {/* Toggle */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline font-medium"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
-          </p>
         </div>
       </div>
     </div>
