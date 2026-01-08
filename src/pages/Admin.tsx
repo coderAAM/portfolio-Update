@@ -154,6 +154,11 @@ const Admin = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   
+  // Admin access password verification state
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isAdminVerified, setIsAdminVerified] = useState(false);
+  const [verifyingPassword, setVerifyingPassword] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -626,8 +631,35 @@ const Admin = () => {
   };
 
   const handleLogout = async () => {
+    setIsAdminVerified(false);
     await supabase.auth.signOut();
     navigate("/");
+  };
+
+  const handleAdminPasswordVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifyingPassword(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-admin-password', {
+        body: { password: adminPassword }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setIsAdminVerified(true);
+        toast({ title: "Access granted!" });
+      } else {
+        toast({ title: "Invalid password", variant: "destructive" });
+      }
+    } catch (error: any) {
+      console.error('Error verifying admin password:', error);
+      toast({ title: "Error", description: "Failed to verify password", variant: "destructive" });
+    } finally {
+      setVerifyingPassword(false);
+      setAdminPassword("");
+    }
   };
 
   const unreadCount = messages.filter(m => !m.read).length;
@@ -640,6 +672,51 @@ const Admin = () => {
     );
   }
 
+  // Admin access password verification screen
+  if (!isAdminVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="glass p-6 md:p-8 rounded-2xl w-full max-w-md">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Admin Access</h1>
+            <p className="text-muted-foreground">Enter the admin access password to continue</p>
+          </div>
+          
+          <form onSubmit={handleAdminPasswordVerify} className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter access password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              required
+              className="text-center"
+            />
+            <Button type="submit" className="w-full" disabled={verifyingPassword}>
+              {verifyingPassword ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  <Lock className="h-4 w-4 mr-2" />
+                  Unlock
+                </>
+              )}
+            </Button>
+          </form>
+          
+          <Button variant="ghost" className="w-full mt-4" onClick={handleLogout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
