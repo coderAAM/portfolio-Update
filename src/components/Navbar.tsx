@@ -9,6 +9,7 @@ const navLinks = [
   { href: "#skills", label: "Skills" },
   { href: "#experience", label: "Experience" },
   { href: "#projects", label: "Projects" },
+  { href: "/blog", label: "Blog", isRoute: true },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -25,13 +26,21 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = (href: string) => {
+  const handleNavClick = (link: typeof navLinks[0]) => {
     setIsOpen(false);
-    if (location.pathname !== "/") {
-      window.location.href = "/" + href;
+    
+    // Handle route links (like /blog)
+    if (link.isRoute) {
+      window.location.href = link.href;
       return;
     }
-    const element = document.querySelector(href);
+    
+    // Handle hash links
+    if (location.pathname !== "/") {
+      window.location.href = "/" + link.href;
+      return;
+    }
+    const element = document.querySelector(link.href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
@@ -60,7 +69,7 @@ export function Navbar() {
               {navLinks.map((link) => (
                 <button
                   key={link.href}
-                  onClick={() => handleNavClick(link.href)}
+                  onClick={() => handleNavClick(link)}
                   className="text-muted-foreground hover:text-primary transition-colors font-medium text-sm xl:text-base"
                 >
                   {link.label}
@@ -88,7 +97,7 @@ export function Navbar() {
             {navLinks.map((link) => (
               <button
                 key={link.href}
-                onClick={() => handleNavClick(link.href)}
+                onClick={() => handleNavClick(link)}
                 className="text-foreground hover:text-primary hover:bg-primary/10 transition-colors font-medium text-left py-4 px-4 rounded-lg text-lg"
               >
                 {link.label}

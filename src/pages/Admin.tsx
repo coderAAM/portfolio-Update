@@ -35,6 +35,8 @@ import { VisitorGraph } from "@/components/admin/VisitorGraph";
 import { SortableExperienceItem } from "@/components/admin/SortableExperienceItem";
 import { ChatExport } from "@/components/admin/ChatExport";
 import { SkillsManager } from "@/components/admin/SkillsManager";
+import { BlogManager } from "@/components/admin/BlogManager";
+import { FileText } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 import {
   Dialog,
@@ -664,7 +666,7 @@ const Admin = () => {
       {/* Main Content */}
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-4 md:mb-8 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-8 mb-4 md:mb-8 h-auto p-1">
             <TabsTrigger value="projects" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Projects</span>
@@ -676,6 +678,10 @@ const Admin = () => {
             <TabsTrigger value="skills" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
               <Code2 className="h-4 w-4" />
               <span className="hidden sm:inline">Skills</span>
+            </TabsTrigger>
+            <TabsTrigger value="blog" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Blog</span>
             </TabsTrigger>
             <TabsTrigger value="messages" className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm relative">
               <MessageSquare className="h-4 w-4" />
@@ -1016,6 +1022,11 @@ const Admin = () => {
           {/* Skills Tab */}
           <TabsContent value="skills">
             <SkillsManager />
+          </TabsContent>
+
+          {/* Blog Tab */}
+          <TabsContent value="blog">
+            <BlogManager />
           </TabsContent>
 
           {/* Messages Tab */}
