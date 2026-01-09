@@ -158,6 +158,9 @@ const Admin = () => {
   const [adminPassword, setAdminPassword] = useState("");
   const [isAdminVerified, setIsAdminVerified] = useState(false);
   const [verifyingPassword, setVerifyingPassword] = useState(false);
+  const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
+  
+  const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
   
   const [formData, setFormData] = useState({
     title: "",
@@ -211,6 +214,36 @@ const Admin = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Session timeout effect
+  useEffect(() => {
+    if (!isAdminVerified) return;
+    
+    const checkTimeout = () => {
+      if (Date.now() - lastActivityTime > SESSION_TIMEOUT_MS) {
+        setIsAdminVerified(false);
+        toast({ 
+          title: "Session expired", 
+          description: "Please re-enter admin password",
+          variant: "destructive" 
+        });
+      }
+    };
+    
+    const interval = setInterval(checkTimeout, 60000); // Check every minute
+    
+    const handleActivity = () => setLastActivityTime(Date.now());
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+    };
+  }, [isAdminVerified, lastActivityTime, toast]);
 
   useEffect(() => {
     if (session) {
