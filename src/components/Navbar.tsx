@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
@@ -17,6 +17,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,13 +32,13 @@ export function Navbar() {
     
     // Handle route links (like /blog)
     if (link.isRoute) {
-      window.location.href = link.href;
+      navigate(link.href);
       return;
     }
     
     // Handle hash links
     if (location.pathname !== "/") {
-      window.location.href = "/" + link.href;
+      navigate("/" + link.href);
       return;
     }
     const element = document.querySelector(link.href);
