@@ -28,6 +28,7 @@ import {
   Bot,
   ChevronDown,
   ChevronUp,
+  Clock,
 } from "lucide-react";
 import { AIContentSuggestion } from "@/components/AIContentSuggestion";
 import { AIExperienceSuggestion } from "@/components/AIExperienceSuggestion";
@@ -161,6 +162,7 @@ const Admin = () => {
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
   
   const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+  const [remainingTime, setRemainingTime] = useState<number>(SESSION_TIMEOUT_MS);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -220,7 +222,11 @@ const Admin = () => {
     if (!isAdminVerified) return;
     
     const checkTimeout = () => {
-      if (Date.now() - lastActivityTime > SESSION_TIMEOUT_MS) {
+      const elapsed = Date.now() - lastActivityTime;
+      const remaining = Math.max(0, SESSION_TIMEOUT_MS - elapsed);
+      setRemainingTime(remaining);
+      
+      if (remaining === 0) {
         setIsAdminVerified(false);
         toast({ 
           title: "Session expired", 
@@ -230,9 +236,12 @@ const Admin = () => {
       }
     };
     
-    const interval = setInterval(checkTimeout, 60000); // Check every minute
+    const interval = setInterval(checkTimeout, 1000); // Update every second
     
-    const handleActivity = () => setLastActivityTime(Date.now());
+    const handleActivity = () => {
+      setLastActivityTime(Date.now());
+      setRemainingTime(SESSION_TIMEOUT_MS);
+    };
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('keydown', handleActivity);
     window.addEventListener('click', handleActivity);
@@ -244,6 +253,12 @@ const Admin = () => {
       window.removeEventListener('click', handleActivity);
     };
   }, [isAdminVerified, lastActivityTime, toast]);
+
+  const formatRemainingTime = (ms: number) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     if (session) {
@@ -761,7 +776,11 @@ const Admin = () => {
               <Code2 className="h-5 w-5 text-primary" />
               <h1 className="text-base md:text-xl font-bold">Admin</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                <Clock className="h-3 w-3" />
+                <span className="font-mono">{formatRemainingTime(remainingTime)}</span>
+              </div>
               <span className="text-xs text-muted-foreground hidden sm:inline truncate max-w-24 md:max-w-none">
                 {session?.user?.email}
               </span>
