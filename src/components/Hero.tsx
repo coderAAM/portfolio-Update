@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
-import { Github, Linkedin, Mail, MapPin, Phone, ExternalLink } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Github, Linkedin, Mail, MapPin, ExternalLink, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import profileImage from "@/assets/ahmed-new-profile.png";
 import { CVDownload } from "@/components/CVDownload";
+import { encodeEmail, decodeEmail, obfuscateEmailDisplay } from "@/lib/email-obfuscation";
 
 interface ProfileData {
   name: string;
   title: string;
   email: string;
-  phone: string;
   location: string;
   summary: string;
   github_url: string | null;
@@ -23,13 +23,23 @@ export function Hero() {
     name: PROFILE.name,
     title: PROFILE.title,
     email: PROFILE.email,
-    phone: PROFILE.phone,
     location: PROFILE.location,
     summary: PROFILE.summary,
     github_url: SOCIAL_LINKS.github,
     linkedin_url: SOCIAL_LINKS.linkedin,
     image_url: null,
   });
+
+  // Encode email for spam protection
+  const encodedEmail = useMemo(() => encodeEmail(profile.email), [profile.email]);
+  const displayEmail = useMemo(() => obfuscateEmailDisplay(profile.email), [profile.email]);
+
+  const handleEmailClick = () => {
+    const email = decodeEmail(encodedEmail);
+    if (email) {
+      window.location.href = `mailto:${email}`;
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -64,7 +74,6 @@ export function Hero() {
           name: data.name,
           title: data.title,
           email: data.email,
-          phone: data.phone,
           location: data.location,
           summary: data.summary,
           github_url: data.github_url,
@@ -108,16 +117,25 @@ export function Hero() {
               {profile.summary}
             </p>
 
-            {/* Contact Info */}
+            {/* Contact Info - Obfuscated for spam protection */}
             <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-muted-foreground justify-center lg:justify-start">
-              <a href={`mailto:${profile.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+              <button 
+                onClick={handleEmailClick}
+                className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
+                title="Click to email"
+                data-email={encodedEmail}
+              >
                 <Mail className="h-4 w-4" />
-                <span className="hidden sm:inline">{profile.email}</span>
-              </a>
-              <a href={`tel:${profile.phone}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Phone className="h-4 w-4" />
-                <span className="hidden sm:inline">{profile.phone}</span>
-              </a>
+                <span className="hidden sm:inline">{displayEmail}</span>
+              </button>
+              <button 
+                onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
+                className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
+                title="Send a message"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Send Message</span>
+              </button>
               <span className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 <span className="hidden sm:inline">{profile.location}</span>

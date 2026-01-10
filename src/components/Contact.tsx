@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Mail, Phone, MapPin, Send, Github, Linkedin } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Mail, MapPin, Send, Github, Linkedin, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { encodeEmail, decodeEmail, obfuscateEmailDisplay } from "@/lib/email-obfuscation";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -23,6 +24,17 @@ export function Contact() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+
+  // Obfuscated email for spam protection
+  const encodedEmail = useMemo(() => encodeEmail(PROFILE.email), []);
+  const displayEmail = useMemo(() => obfuscateEmailDisplay(PROFILE.email), []);
+
+  const handleEmailClick = () => {
+    const email = decodeEmail(encodedEmail);
+    if (email) {
+      window.location.href = `mailto:${email}`;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,9 +104,10 @@ export function Contact() {
               <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Contact Information</h3>
               
               <div className="space-y-6">
-                <a
-                  href={`mailto:${PROFILE.email}`}
-                  className="flex items-start gap-4 group"
+                <button
+                  onClick={handleEmailClick}
+                  className="flex items-start gap-4 group w-full text-left bg-transparent border-none cursor-pointer"
+                  data-email={encodedEmail}
                 >
                   <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <Mail className="h-5 w-5" />
@@ -102,25 +115,24 @@ export function Contact() {
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
                     <p className="font-medium group-hover:text-primary transition-colors">
-                      {PROFILE.email}
+                      {displayEmail}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">Click to reveal & send</p>
                   </div>
-                </a>
+                </button>
 
-                <a
-                  href={`tel:${PROFILE.phone}`}
-                  className="flex items-start gap-4 group"
-                >
-                  <div className="p-3 bg-accent/10 rounded-xl group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                    <Phone className="h-5 w-5" />
+                <div className="flex items-start gap-4 group">
+                  <div className="p-3 bg-accent/10 rounded-xl">
+                    <MessageSquare className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium group-hover:text-accent transition-colors">
-                      {PROFILE.phone}
+                    <p className="text-sm text-muted-foreground">Prefer a form?</p>
+                    <p className="font-medium">
+                      Use the contact form →
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">I'll respond within 24 hours</p>
                   </div>
-                </a>
+                </div>
 
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-muted rounded-xl">
