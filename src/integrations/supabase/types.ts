@@ -109,6 +109,36 @@ export type Database = {
           },
         ]
       }
+      education: {
+        Row: {
+          created_at: string
+          degree: string
+          id: string
+          institution: string
+          period: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          degree: string
+          id?: string
+          institution: string
+          period: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          degree?: string
+          id?: string
+          institution?: string
+          period?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       experience: {
         Row: {
           company: string
