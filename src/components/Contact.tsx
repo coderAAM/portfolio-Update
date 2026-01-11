@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Mail, MapPin, Send, Github, Linkedin, MessageSquare } from "lucide-react";
+import { Mail, MapPin, Send, Github, Linkedin, MessageSquare, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,7 @@ export function Contact() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
   const [formSubmittedAt, setFormSubmittedAt] = useState<number | null>(null); // Time-based spam check
+  const [showSuccess, setShowSuccess] = useState(false); // Success animation state
 
   // Track when form is first interacted with
   const handleFormInteraction = () => {
@@ -117,6 +118,10 @@ export function Contact() {
       });
 
       setFormData({ name: "", email: "", message: "" });
+      setShowSuccess(true);
+      
+      // Hide success animation after 4 seconds
+      setTimeout(() => setShowSuccess(false), 4000);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -215,7 +220,23 @@ export function Contact() {
           </div>
 
           {/* Contact Form */}
-          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8">
+          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8 relative overflow-hidden">
+            {/* Success Animation Overlay */}
+            {showSuccess && (
+              <div className="absolute inset-0 bg-background/95 z-10 flex flex-col items-center justify-center animate-fade-in">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+                  <div className="relative bg-primary rounded-full p-4 animate-scale-in">
+                    <CheckCircle2 className="h-12 w-12 text-primary-foreground" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold mt-6 animate-fade-in">Message Sent!</h3>
+                <p className="text-muted-foreground text-center mt-2 animate-fade-in">
+                  Thank you for reaching out. I'll get back to you soon!
+                </p>
+              </div>
+            )}
+            
             <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Send a Message</h3>
             
             <form onSubmit={handleSubmit} className="space-y-6" onFocus={handleFormInteraction}>
