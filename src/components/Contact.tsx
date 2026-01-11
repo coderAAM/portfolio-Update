@@ -22,8 +22,17 @@ export function Contact() {
     email: "",
     message: "",
   });
+  const [honeypot, setHoneypot] = useState(""); // Honeypot field for spam protection
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+  const [formSubmittedAt, setFormSubmittedAt] = useState<number | null>(null); // Time-based spam check
+
+  // Track when form is first interacted with
+  const handleFormInteraction = () => {
+    if (!formSubmittedAt) {
+      setFormSubmittedAt(Date.now());
+    }
+  };
 
   // Obfuscated email for spam protection
   const encodedEmail = useMemo(() => encodeEmail(PROFILE.email), []);
@@ -39,6 +48,28 @@ export function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    // Honeypot check - if filled, it's likely a bot
+    if (honeypot) {
+      console.log("Honeypot triggered - likely spam");
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for reaching out. I'll get back to you soon!",
+      });
+      setFormData({ name: "", email: "", message: "" });
+      return;
+    }
+
+    // Time-based check - if submitted too quickly (< 3 seconds), likely a bot
+    if (formSubmittedAt && Date.now() - formSubmittedAt < 3000) {
+      console.log("Form submitted too quickly - likely spam");
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for reaching out. I'll get back to you soon!",
+      });
+      setFormData({ name: "", email: "", message: "" });
+      return;
+    }
     
     // Validate form data
     const result = contactSchema.safeParse(formData);
@@ -67,9 +98,22 @@ export function Contact() {
 
       if (error) throw error;
 
+      // Send email notifications (fire and forget - don't block on email)
+      supabase.functions.invoke('send-contact-notification', {
+        body: {
+          name: result.data.name,
+          email: result.data.email,
+          message: result.data.message,
+        }
+      }).then(({ error: emailError }) => {
+        if (emailError) {
+          console.error("Email notification error:", emailError);
+        }
+      });
+
       toast({
-        title: "Message Sent!",
-        description: "Thank you for reaching out. I'll get back to you soon!",
+        title: "Message Sent! ✨",
+        description: "Thank you for reaching out. I'll get back to you soon! Check your email for confirmation.",
       });
 
       setFormData({ name: "", email: "", message: "" });
@@ -174,7 +218,21 @@ export function Contact() {
           <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8">
             <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Send a Message</h3>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" onFocus={handleFormInteraction}>
+              {/* Honeypot field - hidden from real users, but bots will fill it */}
+              <div className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden" aria-hidden="true">
+                <label htmlFor="website">Website</label>
+                <input
+                  type="text"
+                  id="website"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               <div>
                 <label htmlFor="name" className="block text-sm font-medium mb-2">
                   Name
