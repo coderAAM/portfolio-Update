@@ -97,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Portfolio Contact <onboarding@resend.dev>",
+        from: "Portfolio Contact <contact@linkedinahmedali.vercel.app>",
         to: ["mughalahmedali592@gmail.com"],
         subject: `New Contact Form Message from ${name}`,
         html: `
@@ -155,7 +155,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Ahmed Ali Mughal <onboarding@resend.dev>",
+        from: "Ahmed Ali Mughal <noreply@linkedinahmedali.vercel.app>",
         to: [email],
         subject: "Thanks for reaching out! ✨",
         html: `
