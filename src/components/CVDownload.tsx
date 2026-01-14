@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, ChevronDown, Download, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PROFILE, SKILLS, EDUCATION, SOCIAL_LINKS } from "@/lib/constants";
 import { CV_TEMPLATES, CVData } from "@/lib/cv-templates";
-import html2pdf from "html2pdf.js";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,7 @@ export function CVDownload() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState("");
+  const pdfContentRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<ProfileData>({
     name: PROFILE.name,
     title: PROFILE.title,
@@ -125,28 +127,34 @@ export function CVDownload() {
   };
 
   const generatePDF = async () => {
-    if (!selectedTemplate) return;
+    if (!selectedTemplate || !pdfContentRef.current) return;
     setLoading(true);
 
-    const template = CV_TEMPLATES.find(t => t.id === selectedTemplate);
-    if (!template) {
-      setLoading(false);
-      return;
-    }
-
-    const container = document.createElement("div");
-    container.innerHTML = template.generate(getCVData());
-
-    const options = {
-      margin: 10,
-      filename: `${profile.name.replace(/\s+/g, "_")}_CV.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    };
-
     try {
-      await html2pdf().set(options).from(container).save();
+      const canvas = await html2canvas(pdfContentRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 0;
+
+      pdf.addImage(imgData, "JPEG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.save(`${profile.name.replace(/\s+/g, "_")}_CV.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
@@ -195,6 +203,7 @@ export function CVDownload() {
           </DialogHeader>
           <div className="flex-1 overflow-auto bg-muted/50 rounded-lg p-4">
             <div 
+              ref={pdfContentRef}
               className="bg-white mx-auto shadow-lg"
               style={{ maxWidth: "210mm" }}
               dangerouslySetInnerHTML={{ __html: previewHtml }}
