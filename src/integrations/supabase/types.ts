@@ -345,7 +345,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profile: {
+        Row: {
+          created_at: string | null
+          github_url: string | null
+          id: string | null
+          image_url: string | null
+          linkedin_url: string | null
+          location: string | null
+          name: string | null
+          summary: string | null
+          title: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          github_url?: string | null
+          id?: string | null
+          image_url?: string | null
+          linkedin_url?: string | null
+          location?: string | null
+          name?: string | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          github_url?: string | null
+          id?: string | null
+          image_url?: string | null
+          linkedin_url?: string | null
+          location?: string | null
+          name?: string | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
