@@ -98,6 +98,10 @@ export default {
 			},
 			'blink': {
 				'50%': { borderColor: 'transparent' }
+			},
+			'scroll-ticker': {
+				'0%': { transform: 'translateX(0)' },
+				'100%': { transform: 'translateX(-50%)' }
 			}
 		},
 		animation: {
@@ -109,7 +113,8 @@ export default {
 			'slide-in-right': 'slide-in-right 0.6s ease-out forwards',
 			'scale-in': 'scale-in 0.5s ease-out forwards',
 			'typing': 'typing 3.5s steps(40, end)',
-			'blink': 'blink 1s step-end infinite'
+			'blink': 'blink 1s step-end infinite',
+			'scroll-ticker': 'scroll-ticker 20s linear infinite'
 		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',

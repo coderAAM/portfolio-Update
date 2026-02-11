@@ -17,298 +17,181 @@ const contactSchema = z.object({
 
 export function Contact() {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
-  const [honeypot, setHoneypot] = useState(""); // Honeypot field for spam protection
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [honeypot, setHoneypot] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
-  const [formSubmittedAt, setFormSubmittedAt] = useState<number | null>(null); // Time-based spam check
-  const [showSuccess, setShowSuccess] = useState(false); // Success animation state
+  const [formSubmittedAt, setFormSubmittedAt] = useState<number | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Track when form is first interacted with
   const handleFormInteraction = () => {
-    if (!formSubmittedAt) {
-      setFormSubmittedAt(Date.now());
-    }
+    if (!formSubmittedAt) setFormSubmittedAt(Date.now());
   };
 
-  // Obfuscated email for spam protection
   const encodedEmail = useMemo(() => encodeEmail(PROFILE.email), []);
   const displayEmail = useMemo(() => obfuscateEmailDisplay(PROFILE.email), []);
 
   const handleEmailClick = () => {
     const email = decodeEmail(encodedEmail);
-    if (email) {
-      window.location.href = `mailto:${email}`;
-    }
+    if (email) window.location.href = `mailto:${email}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    // Honeypot check - if filled, it's likely a bot
     if (honeypot) {
-      console.log("Honeypot triggered - likely spam");
-      toast({
-        title: "Message Sent!",
-        description: "Thank you for reaching out. I'll get back to you soon!",
-      });
+      toast({ title: "Message Sent!", description: "Thank you for reaching out. I'll get back to you soon!" });
       setFormData({ name: "", email: "", message: "" });
       return;
     }
 
-    // Time-based check - if submitted too quickly (< 3 seconds), likely a bot
     if (formSubmittedAt && Date.now() - formSubmittedAt < 3000) {
-      console.log("Form submitted too quickly - likely spam");
-      toast({
-        title: "Message Sent!",
-        description: "Thank you for reaching out. I'll get back to you soon!",
-      });
+      toast({ title: "Message Sent!", description: "Thank you for reaching out. I'll get back to you soon!" });
       setFormData({ name: "", email: "", message: "" });
       return;
     }
-    
-    // Validate form data
+
     const result = contactSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: { name?: string; email?: string; message?: string } = {};
       result.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          fieldErrors[err.path[0] as keyof typeof fieldErrors] = err.message;
-        }
+        if (err.path[0]) fieldErrors[err.path[0] as keyof typeof fieldErrors] = err.message;
       });
       setErrors(fieldErrors);
       return;
     }
 
     setLoading(true);
-
     try {
-      // Save message to database
-      const { error } = await supabase
-        .from("messages")
-        .insert([{
-          name: result.data.name,
-          email: result.data.email,
-          message: result.data.message,
-        }]);
-
+      const { error } = await supabase.from("messages").insert([{
+        name: result.data.name,
+        email: result.data.email,
+        message: result.data.message,
+      }]);
       if (error) throw error;
 
-      // Send email notifications (fire and forget - don't block on email)
       supabase.functions.invoke('send-contact-notification', {
-        body: {
-          name: result.data.name,
-          email: result.data.email,
-          message: result.data.message,
-        }
+        body: { name: result.data.name, email: result.data.email, message: result.data.message }
       }).then(({ error: emailError }) => {
-        if (emailError) {
-          console.error("Email notification error:", emailError);
-        }
+        if (emailError) console.error("Email notification error:", emailError);
       });
 
-      toast({
-        title: "Message Sent! ✨",
-        description: "Thank you for reaching out. I'll get back to you soon! Check your email for confirmation.",
-      });
-
+      toast({ title: "Message Sent! ✨", description: "Thank you for reaching out. I'll get back to you soon!" });
       setFormData({ name: "", email: "", message: "" });
       setShowSuccess(true);
-      
-      // Hide success animation after 4 seconds
       setTimeout(() => setShowSuccess(false), 4000);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to send message. Please try again.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section id="contact" className="py-16 md:py-24 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10 md:mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Contact />"}</p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-            Get In <span className="text-gradient">Touch</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
+    <section id="contact" className="py-4">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6 md:p-8 shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground mb-1">Get In Touch</h2>
+          <p className="text-sm text-muted-foreground mb-6">
             Have a project in mind or want to collaborate? Feel free to reach out!
           </p>
-        </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 md:gap-12 max-w-5xl mx-auto">
-          {/* Contact Info */}
-          <div className="space-y-6 md:space-y-8">
-            <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8">
-              <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Contact Information</h3>
-              
-              <div className="space-y-6">
-                <button
-                  onClick={handleEmailClick}
-                  className="flex items-start gap-4 group w-full text-left bg-transparent border-none cursor-pointer"
-                  data-email={encodedEmail}
-                >
-                  <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium group-hover:text-primary transition-colors">
-                      {displayEmail}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">Click to reveal & send</p>
-                  </div>
-                </button>
-
-                <div className="flex items-start gap-4 group">
-                  <div className="p-3 bg-accent/10 rounded-xl">
-                    <MessageSquare className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Prefer a form?</p>
-                    <p className="font-medium">
-                      Use the contact form →
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">I'll respond within 24 hours</p>
-                  </div>
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Contact Info */}
+            <div className="space-y-4">
+              <button
+                onClick={handleEmailClick}
+                className="flex items-center gap-3 w-full text-left bg-transparent border-none cursor-pointer group p-3 rounded-lg hover:bg-muted transition-colors"
+                data-email={encodedEmail}
+              >
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <Mail className="h-4 w-4" />
                 </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium group-hover:text-primary transition-colors">{displayEmail}</p>
+                </div>
+              </button>
 
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-muted rounded-xl">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Location</p>
-                    <p className="font-medium">{PROFILE.location}</p>
-                  </div>
+              <div className="flex items-center gap-3 p-3">
+                <div className="p-2 bg-muted rounded-lg">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="text-sm font-medium">{PROFILE.location}</p>
                 </div>
               </div>
 
-              {/* Social Links */}
-              <div className="mt-8 pt-8 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-4">Follow Me</p>
-                <div className="flex gap-4">
-                  <a
-                    href={SOCIAL_LINKS.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-3 glass rounded-xl hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <Github className="h-5 w-5" />
+              <div className="pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-3">Connect with me</p>
+                <div className="flex gap-2">
+                  <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="rounded-full gap-2 text-xs">
+                      <Github className="h-3.5 w-3.5" />
+                      GitHub
+                    </Button>
                   </a>
-                  <a
-                    href={SOCIAL_LINKS.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-3 glass rounded-xl hover:bg-primary hover:text-primary-foreground transition-all"
-                  >
-                    <Linkedin className="h-5 w-5" />
+                  <a href={SOCIAL_LINKS.linkedin} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm" className="rounded-full gap-2 text-xs">
+                      <Linkedin className="h-3.5 w-3.5" />
+                      LinkedIn
+                    </Button>
                   </a>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Contact Form */}
-          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8 relative overflow-hidden">
-            {/* Success Animation Overlay */}
-            {showSuccess && (
-              <div className="absolute inset-0 bg-background/95 z-10 flex flex-col items-center justify-center animate-fade-in">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
-                  <div className="relative bg-primary rounded-full p-4 animate-scale-in">
-                    <CheckCircle2 className="h-12 w-12 text-primary-foreground" />
+            {/* Contact Form */}
+            <div className="relative">
+              {showSuccess && (
+                <div className="absolute inset-0 bg-card/95 z-10 flex flex-col items-center justify-center rounded-lg animate-fade-in">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+                    <div className="relative bg-primary rounded-full p-3">
+                      <CheckCircle2 className="h-8 w-8 text-primary-foreground" />
+                    </div>
                   </div>
+                  <h3 className="text-base font-semibold mt-4">Message Sent!</h3>
+                  <p className="text-sm text-muted-foreground text-center mt-1">I'll get back to you soon!</p>
                 </div>
-                <h3 className="text-xl font-semibold mt-6 animate-fade-in">Message Sent!</h3>
-                <p className="text-muted-foreground text-center mt-2 animate-fade-in">
-                  Thank you for reaching out. I'll get back to you soon!
-                </p>
-              </div>
-            )}
-            
-            <h3 className="text-lg md:text-xl font-semibold mb-4 md:mb-6">Send a Message</h3>
-            
-            <form onSubmit={handleSubmit} className="space-y-6" onFocus={handleFormInteraction}>
-              {/* Honeypot field - hidden from real users, but bots will fill it */}
-              <div className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden" aria-hidden="true">
-                <label htmlFor="website">Website</label>
-                <input
-                  type="text"
-                  id="website"
-                  name="website"
-                  value={honeypot}
-                  onChange={(e) => setHoneypot(e.target.value)}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-              </div>
+              )}
 
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Your name"
-                  className={`bg-background/50 ${errors.name ? 'border-destructive' : ''}`}
-                />
-                {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
-              </div>
+              <form onSubmit={handleSubmit} className="space-y-4" onFocus={handleFormInteraction}>
+                <div className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden" aria-hidden="true">
+                  <label htmlFor="website">Website</label>
+                  <input type="text" id="website" name="website" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+                </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="your@email.com"
-                  className={`bg-background/50 ${errors.email ? 'border-destructive' : ''}`}
-                />
-                {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
-              </div>
+                <div>
+                  <label htmlFor="name" className="block text-xs font-medium mb-1.5">Name</label>
+                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Your name" className={`text-sm ${errors.name ? 'border-destructive' : ''}`} />
+                  {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
+                </div>
 
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium mb-2">
-                  Message
-                </label>
-                <Textarea
-                  id="message"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Your message..."
-                  rows={5}
-                  className={`bg-background/50 resize-none ${errors.message ? 'border-destructive' : ''}`}
-                />
-                {errors.message && <p className="text-destructive text-xs mt-1">{errors.message}</p>}
-              </div>
+                <div>
+                  <label htmlFor="email" className="block text-xs font-medium mb-1.5">Email</label>
+                  <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="your@email.com" className={`text-sm ${errors.email ? 'border-destructive' : ''}`} />
+                  {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
+                </div>
 
-              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-                {loading ? (
-                  "Sending..."
-                ) : (
-                  <>
-                    Send Message
-                    <Send className="h-4 w-4" />
-                  </>
-                )}
-              </Button>
-            </form>
+                <div>
+                  <label htmlFor="message" className="block text-xs font-medium mb-1.5">Message</label>
+                  <Textarea id="message" value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} placeholder="Your message..." rows={4} className={`text-sm resize-none ${errors.message ? 'border-destructive' : ''}`} />
+                  {errors.message && <p className="text-destructive text-xs mt-1">{errors.message}</p>}
+                </div>
+
+                <Button type="submit" size="sm" className="w-full rounded-full gap-2" disabled={loading}>
+                  {loading ? "Sending..." : (
+                    <>
+                      Send Message
+                      <Send className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

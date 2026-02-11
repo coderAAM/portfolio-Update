@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { Github, Linkedin, Mail, MapPin, ExternalLink, MessageSquare } from "lucide-react";
+import { Github, Linkedin, Mail, MapPin, ExternalLink, MessageSquare, UserPlus, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import profileImage from "@/assets/ahmed-new-profile.png";
+import coverBanner from "@/assets/cover-banner.jpg";
 import { CVDownload } from "@/components/CVDownload";
+import { ScrollingTicker } from "@/components/ScrollingTicker";
 import { encodeEmail, decodeEmail, obfuscateEmailDisplay } from "@/lib/email-obfuscation";
 
 interface ProfileData {
@@ -30,7 +32,6 @@ export function Hero() {
     image_url: null,
   });
 
-  // Encode email for spam protection
   const encodedEmail = useMemo(() => encodeEmail(profile.email), [profile.email]);
   const displayEmail = useMemo(() => obfuscateEmailDisplay(profile.email), [profile.email]);
 
@@ -43,31 +44,18 @@ export function Hero() {
 
   useEffect(() => {
     fetchProfile();
-
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'profile_settings' },
-        () => {
-          fetchProfile();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_settings' }, () => {
+        fetchProfile();
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function fetchProfile() {
     try {
-      const { data, error } = await supabase
-        .from("profile_settings")
-        .select("*")
-        .maybeSingle();
-
+      const { data, error } = await supabase.from("profile_settings").select("*").maybeSingle();
       if (error) throw error;
       if (data) {
         setProfile({
@@ -87,126 +75,126 @@ export function Hero() {
   }
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20">
-      {/* Background Elements */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-primary/20 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 md:w-96 h-64 md:h-96 bg-accent/20 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[800px] h-[600px] md:h-[800px] bg-gradient-to-r from-primary/5 to-accent/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
-          {/* Left Column - Content */}
-          <div className="space-y-6 md:space-y-8 animate-slide-in-left text-center lg:text-left order-2 lg:order-1">
-            <div className="space-y-3 md:space-y-4">
-              <p className="text-primary font-mono text-sm md:text-base tracking-wider">
-                {"<Hello World />"}
-              </p>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                I'm{" "}
-                <span className="text-gradient">{profile.name}</span>
-              </h1>
-              <div className="flex items-center gap-2 text-base md:text-lg lg:text-xl text-muted-foreground justify-center lg:justify-start">
-                <span className="w-8 md:w-12 h-0.5 bg-primary" />
-                <span className="font-medium">{profile.title}</span>
-              </div>
-            </div>
-
-            <p className="text-muted-foreground text-sm md:text-base lg:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
-              {profile.summary}
-            </p>
-
-            {/* Contact Info - Obfuscated for spam protection */}
-            <div className="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm text-muted-foreground justify-center lg:justify-start">
-              <button 
-                onClick={handleEmailClick}
-                className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
-                title="Click to email"
-                data-email={encodedEmail}
-              >
-                <Mail className="h-4 w-4" />
-                <span className="hidden sm:inline">{displayEmail}</span>
-              </button>
-              <button 
-                onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
-                className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer bg-transparent border-none"
-                title="Send a message"
-              >
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Send Message</span>
-              </button>
-              <span className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">{profile.location}</span>
-              </span>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-3 md:gap-4 justify-center lg:justify-start">
-              <Button variant="hero" size="lg" className="text-sm md:text-base" onClick={() => document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" })}>
-                View Projects
-                <ExternalLink className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
-              <CVDownload />
-              <Button variant="heroOutline" size="lg" className="text-sm md:text-base" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
-                Contact Me
-              </Button>
-            </div>
-
-            {/* Social Links */}
-            <div className="flex gap-4 pt-2 md:pt-4 justify-center lg:justify-start">
-              {profile.github_url && (
-                <a
-                  href={profile.github_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 glass rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
-                >
-                  <Github className="h-5 w-5" />
-                </a>
-              )}
-              {profile.linkedin_url && (
-                <a
-                  href={profile.linkedin_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-3 glass rounded-full hover:bg-primary hover:text-primary-foreground transition-all hover:scale-110"
-                >
-                  <Linkedin className="h-5 w-5" />
-                </a>
-              )}
-            </div>
+    <section className="pt-16">
+      {/* LinkedIn-style Profile Card */}
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-card rounded-b-xl border border-border overflow-hidden shadow-lg">
+          {/* Cover Banner */}
+          <div className="relative h-48 sm:h-56 md:h-64">
+            <img
+              src={coverBanner}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
           </div>
 
-          {/* Right Column - Image */}
-          <div className="relative animate-slide-in-right order-1 lg:order-2">
-            <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 mx-auto">
-              {/* Glow Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-full blur-2xl opacity-30 animate-pulse-glow" />
-              
-              {/* Image Container */}
-              <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-primary/30 glow-primary">
+          {/* Profile Info Section */}
+          <div className="relative px-4 sm:px-6 md:px-8 pb-6">
+            {/* Profile Picture - overlapping the cover */}
+            <div className="relative -mt-16 sm:-mt-20 md:-mt-24 mb-4">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full border-4 border-card overflow-hidden bg-card shadow-xl">
                 <img
                   src={profile.image_url || profileImage}
                   alt={profile.name}
                   className="w-full h-full object-cover"
                 />
               </div>
+            </div>
 
-              {/* Floating Elements */}
-              <div className="absolute -top-2 -right-2 md:-top-4 md:-right-4 p-2 md:p-4 glass rounded-xl animate-float">
-                <span className="text-lg md:text-2xl">🚀</span>
+            {/* Name & Title */}
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              <div className="space-y-2 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                  {profile.name}
+                </h1>
+                <p className="text-sm sm:text-base text-foreground/90 font-medium">
+                  {profile.title}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {profile.location}
+                  </span>
+                  <span>•</span>
+                  <button
+                    onClick={handleEmailClick}
+                    className="text-primary hover:underline bg-transparent border-none cursor-pointer font-medium"
+                    data-email={encodedEmail}
+                  >
+                    Contact info
+                  </button>
+                </div>
+
+                {/* Connections-like info */}
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-primary font-medium pt-1">
+                  <span className="hover:underline cursor-pointer">500+ connections</span>
+                </div>
               </div>
-              <div className="absolute -bottom-2 -left-2 md:-bottom-4 md:-left-4 p-2 md:p-4 glass rounded-xl animate-float" style={{ animationDelay: "0.5s" }}>
-                <span className="text-lg md:text-2xl">💻</span>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="rounded-full gap-1.5 text-xs sm:text-sm"
+                  onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Message
+                </Button>
+                <CVDownload />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full gap-1.5 text-xs sm:text-sm"
+                  onClick={() => document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  View Projects
+                </Button>
               </div>
-              <div className="absolute top-1/2 -right-4 md:-right-8 p-2 md:p-4 glass rounded-xl animate-float hidden sm:block" style={{ animationDelay: "1s" }}>
-                <span className="text-lg md:text-2xl">⚡</span>
-              </div>
+            </div>
+
+            {/* Social Links Row */}
+            <div className="flex gap-2 mt-4 pt-4 border-t border-border">
+              {profile.github_url && (
+                <a href={profile.github_url} target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="sm" className="rounded-full gap-2 text-muted-foreground hover:text-foreground">
+                    <Github className="h-4 w-4" />
+                    <span className="hidden sm:inline">GitHub</span>
+                  </Button>
+                </a>
+              )}
+              {profile.linkedin_url && (
+                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="sm" className="rounded-full gap-2 text-muted-foreground hover:text-foreground">
+                    <Linkedin className="h-4 w-4" />
+                    <span className="hidden sm:inline">LinkedIn</span>
+                  </Button>
+                </a>
+              )}
+              <button
+                onClick={handleEmailClick}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors bg-transparent border-none cursor-pointer"
+              >
+                <Mail className="h-4 w-4" />
+                <span className="hidden sm:inline">Email</span>
+              </button>
             </div>
           </div>
         </div>
+
+        {/* About Section - LinkedIn style card */}
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6 md:p-8 mt-2 shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground mb-3">About</h2>
+          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+            {profile.summary}
+          </p>
+        </div>
+      </div>
+
+      {/* Scrolling Ticker */}
+      <div className="mt-6">
+        <ScrollingTicker />
       </div>
     </section>
   );

@@ -12,18 +12,16 @@ import { useEffect } from "react";
 import { usePageVisit } from "@/hooks/usePageVisit";
 
 const Index = () => {
-  // Track page visits
   usePageVisit("/");
 
   useEffect(() => {
-    // Set dark mode by default
     document.documentElement.classList.add("dark");
   }, []);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       <Navbar />
-      <main className="overflow-x-hidden">
+      <main className="overflow-x-hidden space-y-2 pb-8">
         <Hero />
         <Skills />
         <Experience />
