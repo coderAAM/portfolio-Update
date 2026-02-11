@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, Github, Folder, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
@@ -21,22 +22,13 @@ export function Projects() {
 
   useEffect(() => {
     fetchProjects();
-
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('projects-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'projects' },
-        () => {
-          fetchProjects();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
+        fetchProjects();
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function fetchProjects() {
@@ -46,7 +38,6 @@ export function Projects() {
         .select("*")
         .order("featured", { ascending: false })
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setProjects(data || []);
     } catch (error) {
@@ -57,120 +48,94 @@ export function Projects() {
   }
 
   return (
-    <section id="projects" className="py-16 md:py-24">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10 md:mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Projects />"}</p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-            Featured <span className="text-gradient">Work</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
-            A collection of projects that showcase my skills and passion for building
-          </p>
-        </div>
+    <section id="projects" className="py-4">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6 md:p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-lg font-semibold text-foreground">Featured</h2>
+            {projects.length > 4 && (
+              <Link to="/projects">
+                <Button variant="ghost" size="sm" className="text-primary text-sm">
+                  Show all →
+                </Button>
+              </Link>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mb-6">Projects and portfolio work</p>
 
-        {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="glass rounded-2xl p-6 animate-pulse">
-                <div className="h-48 bg-muted rounded-xl mb-4" />
-                <div className="h-6 bg-muted rounded w-3/4 mb-2" />
-                <div className="h-4 bg-muted rounded w-full mb-4" />
-                <div className="flex gap-2">
-                  <div className="h-6 bg-muted rounded-full w-16" />
-                  <div className="h-6 bg-muted rounded-full w-16" />
+          {loading ? (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="border border-border rounded-xl p-4 animate-pulse">
+                  <div className="h-36 bg-muted rounded-lg mb-3" />
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-muted rounded w-full" />
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
-              <Folder className="h-12 w-12 text-muted-foreground" />
+              ))}
             </div>
-            <h3 className="text-xl font-semibold mb-2">No Projects Yet</h3>
-            <p className="text-muted-foreground mb-6">
-              Projects will appear here once added from the admin panel
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-              {projects.slice(0, 4).map((project, index) => (
+          ) : projects.length === 0 ? (
+            <div className="text-center py-12">
+              <Folder className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No projects yet</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {projects.slice(0, 4).map((project) => (
                 <div
                   key={project.id}
-                  className="glass rounded-2xl overflow-hidden group hover:scale-[1.02] transition-all duration-300"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="border border-border rounded-xl overflow-hidden hover:shadow-md transition-shadow group"
                 >
                   {/* Project Image */}
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-36 overflow-hidden bg-muted">
                     {project.image_url ? (
                       <img
                         src={project.image_url}
                         alt={project.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <Folder className="h-16 w-16 text-muted-foreground/50" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Folder className="h-12 w-12 text-muted-foreground/30" />
                       </div>
                     )}
                     {project.featured && (
-                      <div className="absolute top-4 left-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                        Featured
-                      </div>
+                      <Badge className="absolute top-2 left-2 text-xs">Featured</Badge>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
 
                   {/* Project Content */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                  <div className="p-4">
+                    <h3 className="font-semibold text-sm text-foreground mb-1 group-hover:text-primary transition-colors">
                       {project.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
                       {project.description}
                     </p>
-
-                    {/* Technologies */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.technologies.slice(0, 4).map((tech) => (
-                        <span
-                          key={tech}
-                          className="px-2 py-1 text-xs bg-muted rounded-full text-muted-foreground"
-                        >
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {project.technologies.slice(0, 3).map((tech) => (
+                        <Badge key={tech} variant="outline" className="text-[10px] font-normal">
                           {tech}
-                        </span>
+                        </Badge>
                       ))}
-                      {project.technologies.length > 4 && (
-                        <span className="px-2 py-1 text-xs bg-muted rounded-full text-muted-foreground">
-                          +{project.technologies.length - 4}
-                        </span>
+                      {project.technologies.length > 3 && (
+                        <Badge variant="outline" className="text-[10px] font-normal">
+                          +{project.technologies.length - 3}
+                        </Badge>
                       )}
                     </div>
-
-                    {/* Links */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       {project.github_url && (
-                        <a
-                          href={project.github_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <Github className="h-4 w-4" />
+                        <a href={project.github_url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
+                            <Github className="h-3.5 w-3.5" />
                             Code
                           </Button>
                         </a>
                       )}
                       {project.live_url && (
-                        <a
-                          href={project.live_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <ExternalLink className="h-4 w-4" />
+                        <a href={project.live_url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5">
+                            <ExternalLink className="h-3.5 w-3.5" />
                             Live
                           </Button>
                         </a>
@@ -180,19 +145,8 @@ export function Projects() {
                 </div>
               ))}
             </div>
-            
-            {projects.length > 4 && (
-              <div className="text-center mt-10">
-                <Link to="/projects">
-                  <Button variant="outline" size="lg" className="gap-2">
-                    View All Projects
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </>
-        )}
+          )}
+        </div>
       </div>
     </section>
   );

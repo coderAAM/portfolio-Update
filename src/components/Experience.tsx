@@ -18,22 +18,13 @@ export function Experience() {
 
   useEffect(() => {
     fetchExperiences();
-
-    // Subscribe to real-time changes
     const channel = supabase
       .channel('experience-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'experience' },
-        () => {
-          fetchExperiences();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'experience' }, () => {
+        fetchExperiences();
+      })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function fetchExperiences() {
@@ -42,7 +33,6 @@ export function Experience() {
         .from("experience")
         .select("*")
         .order("sort_order", { ascending: true });
-
       if (error) throw error;
       setExperiences(data || []);
     } catch (error) {
@@ -53,123 +43,93 @@ export function Experience() {
   }
 
   return (
-    <section id="experience" className="py-16 md:py-24 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10 md:mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Experience />"}</p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-            Professional <span className="text-gradient">Journey</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
-            My career path and educational background that shaped me as a developer
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-12">
-          {/* Work Experience */}
-          <div>
-            <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
-              <div className="p-2 md:p-3 bg-primary/10 rounded-lg md:rounded-xl">
-                <Briefcase className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              </div>
-              <h3 className="text-xl md:text-2xl font-semibold">Work Experience</h3>
-            </div>
-
-            {loading ? (
-              <div className="space-y-8">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="relative pl-12">
-                    <div className="glass rounded-xl p-6 animate-pulse">
-                      <div className="h-4 bg-muted rounded w-1/3 mb-2" />
-                      <div className="h-5 bg-muted rounded w-2/3 mb-1" />
-                      <div className="h-4 bg-muted rounded w-1/2 mb-4" />
-                      <div className="space-y-2">
-                        <div className="h-3 bg-muted rounded w-full" />
-                        <div className="h-3 bg-muted rounded w-5/6" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : experiences.length === 0 ? (
-              <div className="glass rounded-xl p-6 text-center">
-                <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No experience added yet</p>
-              </div>
-            ) : (
-              <div className="relative">
-                {/* Timeline Line */}
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary to-accent" />
-
-                <div className="space-y-8">
-                  {experiences.map((exp, index) => (
-                    <div key={exp.id} className="relative pl-12">
-                      {/* Timeline Dot */}
-                      <div className="absolute left-2 top-2 w-5 h-5 rounded-full bg-primary border-4 border-background" />
-                      
-                      <div className="glass rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300">
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-2">
-                          <Calendar className="h-3 w-3" />
-                          <span>{exp.period}</span>
-                        </div>
-                        <h4 className="text-lg font-semibold text-foreground mb-1">
-                          {exp.title}
-                        </h4>
-                        <p className="text-sm text-primary mb-4">{exp.company}</p>
-                        <ul className="space-y-2">
-                          {exp.description.map((item, i) => (
-                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                              <span className="text-accent mt-1">▸</span>
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+    <section id="experience" className="py-4">
+      <div className="max-w-4xl mx-auto px-4 space-y-2">
+        {/* Experience Card */}
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6 md:p-8 shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <Briefcase className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Experience</h2>
           </div>
 
-          {/* Education */}
-          <div>
-            <div className="flex items-center gap-2 md:gap-3 mb-6 md:mb-8">
-              <div className="p-2 md:p-3 bg-accent/10 rounded-lg md:rounded-xl">
-                <GraduationCap className="h-5 w-5 md:h-6 md:w-6 text-accent" />
-              </div>
-              <h3 className="text-xl md:text-2xl font-semibold">Education</h3>
-            </div>
-
-            <div className="space-y-6">
-              {EDUCATION.map((edu, index) => (
-                <div
-                  key={index}
-                  className="glass rounded-xl p-6 hover:scale-[1.02] transition-transform duration-300 border-l-4 border-accent"
-                >
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <Calendar className="h-3 w-3" />
-                    <span>{edu.period}</span>
+          {loading ? (
+            <div className="space-y-6 mt-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 animate-pulse">
+                  <div className="w-12 h-12 bg-muted rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted rounded w-1/3" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                    <div className="h-3 bg-muted rounded w-1/4" />
                   </div>
-                  <h4 className="text-lg font-semibold text-foreground mb-1">
-                    {edu.degree}
-                  </h4>
-                  <p className="text-sm text-accent">{edu.institution}</p>
                 </div>
               ))}
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 md:gap-4 mt-6 md:mt-8">
-              <div className="glass rounded-lg md:rounded-xl p-4 md:p-6 text-center">
-                <div className="text-2xl md:text-3xl font-bold text-primary mb-1">2+</div>
-                <div className="text-xs md:text-sm text-muted-foreground">Years Experience</div>
-              </div>
-              <div className="glass rounded-lg md:rounded-xl p-4 md:p-6 text-center">
-                <div className="text-2xl md:text-3xl font-bold text-accent mb-1">20+</div>
-                <div className="text-xs md:text-sm text-muted-foreground">Projects Completed</div>
-              </div>
+          ) : experiences.length === 0 ? (
+            <div className="text-center py-8">
+              <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No experience added yet</p>
             </div>
+          ) : (
+            <div className="mt-4 space-y-0">
+              {experiences.map((exp, index) => (
+                <div
+                  key={exp.id}
+                  className={`flex gap-4 py-4 ${index < experiences.length - 1 ? "border-b border-border" : ""}`}
+                >
+                  {/* Company Icon Placeholder */}
+                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                    <Briefcase className="h-6 w-6 text-muted-foreground" />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm sm:text-base text-foreground">
+                      {exp.title}
+                    </h3>
+                    <p className="text-sm text-foreground/80">{exp.company}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <Calendar className="h-3 w-3" />
+                      {exp.period}
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {exp.description.slice(0, 2).map((item, i) => (
+                        <li key={i} className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                          • {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Education Card */}
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6 md:p-8 shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <GraduationCap className="h-5 w-5 text-accent" />
+            <h2 className="text-lg font-semibold text-foreground">Education</h2>
+          </div>
+
+          <div className="mt-4 space-y-0">
+            {EDUCATION.map((edu, index) => (
+              <div
+                key={index}
+                className={`flex gap-4 py-4 ${index < EDUCATION.length - 1 ? "border-b border-border" : ""}`}
+              >
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                  <GraduationCap className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">
+                    {edu.degree}
+                  </h3>
+                  <p className="text-sm text-foreground/80">{edu.institution}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{edu.period}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

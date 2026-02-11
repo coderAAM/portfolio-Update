@@ -1,6 +1,7 @@
 import { Code2, Database, Palette, Server } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 const skillIcons: Record<string, typeof Code2> = {
   JavaScript: Code2,
@@ -36,112 +37,78 @@ export function Skills() {
   const databaseSkills = skills.filter((s) => s.category === "databases");
 
   return (
-    <section id="skills" className="py-16 md:py-24 relative">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-10 md:mb-16 animate-fade-in">
-          <p className="text-primary font-mono text-xs md:text-sm mb-2">{"<Skills />"}</p>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-            Technical <span className="text-gradient">Expertise</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-sm md:text-base px-2">
-            A comprehensive toolkit of modern technologies for building exceptional web applications
-          </p>
-        </div>
+    <section id="skills" className="py-4">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6 md:p-8 shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground mb-1">Skills</h2>
+          <p className="text-sm text-muted-foreground mb-6">Top skills and technologies</p>
 
-        <div className="grid md:grid-cols-2 gap-4 md:gap-8">
-          {/* Languages & Frameworks */}
-          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8 hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-              <div className="p-2 md:p-3 bg-primary/10 rounded-lg md:rounded-xl">
-                <Code2 className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+          <div className="space-y-6">
+            {/* Languages & Frameworks */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Code2 className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Languages & Frameworks</h3>
               </div>
-              <h3 className="text-lg md:text-xl font-semibold">Languages & Frameworks</h3>
-            </div>
-            <div className="space-y-6">
-              {languageSkills.map((skill, index) => {
-                const Icon = skillIcons[skill.name as keyof typeof skillIcons] || Code2;
-                return (
-                  <div key={skill.name} className="space-y-2" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{skill.name}</span>
+              <div className="space-y-4">
+                {languageSkills.map((skill) => {
+                  const Icon = skillIcons[skill.name] || Code2;
+                  return (
+                    <div key={skill.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium text-sm text-foreground">{skill.name}</span>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        skill.level === "Expert" 
-                          ? "bg-primary/20 text-primary" 
-                          : "bg-accent/20 text-accent"
-                      }`}>
+                      <Badge
+                        variant={skill.level === "Expert" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
                         {skill.level}
-                      </span>
+                      </Badge>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          skill.level === "Expert" 
-                            ? "bg-gradient-to-r from-primary to-primary/70 w-[95%]" 
-                            : "bg-gradient-to-r from-accent to-accent/70 w-[75%]"
-                        }`}
-                      />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Databases & Tools */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Database className="h-4 w-4 text-accent" />
+                <h3 className="text-sm font-semibold text-foreground">Databases & Tools</h3>
+              </div>
+              <div className="space-y-4">
+                {databaseSkills.map((skill) => {
+                  const Icon = skillIcons[skill.name] || Database;
+                  return (
+                    <div key={skill.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium text-sm text-foreground">{skill.name}</span>
+                      </div>
+                      <Badge
+                        variant={skill.level === "Expert" ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {skill.level}
+                      </Badge>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Databases & Tools */}
-          <div className="glass rounded-xl md:rounded-2xl p-5 md:p-8 hover:scale-[1.02] transition-transform duration-300">
-            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-              <div className="p-2 md:p-3 bg-accent/10 rounded-lg md:rounded-xl">
-                <Database className="h-5 w-5 md:h-6 md:w-6 text-accent" />
-              </div>
-              <h3 className="text-lg md:text-xl font-semibold">Databases & Tools</h3>
-            </div>
-            <div className="space-y-6">
-              {databaseSkills.map((skill, index) => {
-                const Icon = skillIcons[skill.name as keyof typeof skillIcons] || Database;
-                return (
-                  <div key={skill.name} className="space-y-2" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{skill.name}</span>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        skill.level === "Expert" 
-                          ? "bg-primary/20 text-primary" 
-                          : "bg-accent/20 text-accent"
-                      }`}>
-                        {skill.level}
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          skill.level === "Expert" 
-                            ? "bg-gradient-to-r from-primary to-primary/70 w-[95%]" 
-                            : "bg-gradient-to-r from-accent to-accent/70 w-[75%]"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Tech Stack Tags */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <div className="flex flex-wrap gap-2">
+              {["React", "Node.js", "MongoDB", "Express", "TypeScript", "Tailwind", "WordPress", "Git"].map((tech) => (
+                <Badge key={tech} variant="outline" className="text-xs font-normal">
+                  {tech}
+                </Badge>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* Tech Stack Icons */}
-        <div className="mt-10 md:mt-16 flex flex-wrap justify-center gap-2 md:gap-4">
-          {["React", "Node.js", "MongoDB", "Express", "TypeScript", "Tailwind", "WordPress", "Git"].map((tech) => (
-            <div
-              key={tech}
-              className="px-3 py-2 md:px-6 md:py-3 glass rounded-full text-xs md:text-sm font-medium hover:bg-primary hover:text-primary-foreground transition-all cursor-default"
-            >
-              {tech}
-            </div>
-          ))}
         </div>
       </div>
     </section>
