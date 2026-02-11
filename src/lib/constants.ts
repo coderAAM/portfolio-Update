@@ -72,6 +72,6 @@ export const EDUCATION = [
 
 export const SOCIAL_LINKS = {
   github: "https://github.com/coderAAM?tab=repositories",
-  linkedin: "https://www.linkedin.com/in/ahmed-ali-bbb274289/",
+  linkedin: "https://www.linkedin.com/in/ahmed-ali-mughal20/",
   twitter: "https://twitter.com/ahmedali",
 };
