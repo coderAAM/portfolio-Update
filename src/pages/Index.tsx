@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import InstallPWA from "@/components/InstallPWA";
 import { AIChatbot } from "@/components/AIChatbot";
+import { ParticleBackground } from "@/components/ParticleBackground";
 import { useEffect } from "react";
 import { usePageVisit } from "@/hooks/usePageVisit";
 
@@ -19,9 +20,10 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      <ParticleBackground />
       <Navbar />
-      <main className="overflow-x-hidden space-y-2 pb-8">
+      <main className="overflow-x-hidden space-y-2 pb-8 relative z-10">
         <Hero />
         <Skills />
         <Experience />
