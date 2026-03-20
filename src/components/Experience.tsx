@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Briefcase, GraduationCap, Calendar } from "lucide-react";
 import { EDUCATION } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
-import { useGsapFadeIn, useGsapStagger } from "@/hooks/useGsapAnimation";
 
 interface ExperienceItem {
   id: string;
@@ -16,9 +15,6 @@ interface ExperienceItem {
 export function Experience() {
   const [experiences, setExperiences] = useState<ExperienceItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const expRef = useGsapFadeIn<HTMLDivElement>();
-  const eduRef = useGsapFadeIn<HTMLDivElement>();
-  const itemsRef = useGsapStagger<HTMLDivElement>(".exp-item");
 
   useEffect(() => {
     fetchExperiences();
@@ -44,7 +40,7 @@ export function Experience() {
   return (
     <section id="experience" className="py-4">
       <div className="max-w-4xl mx-auto px-4 space-y-2">
-        <div ref={expRef} className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm" style={{ opacity: 0 }}>
+        <div className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <Briefcase className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Experience</h2>
@@ -68,9 +64,9 @@ export function Experience() {
               <p className="text-muted-foreground">No experience added yet</p>
             </div>
           ) : (
-            <div ref={itemsRef} className="mt-4 space-y-0">
+            <div className="mt-4 space-y-0">
               {experiences.map((exp, index) => (
-                <div key={exp.id} className={`exp-item flex gap-4 py-4 ${index < experiences.length - 1 ? "border-b border-border/50" : ""} hover:bg-primary/5 rounded-lg px-2 transition-colors`}>
+                <div key={exp.id} className={`flex gap-4 py-4 ${index < experiences.length - 1 ? "border-b border-border/50" : ""} hover:bg-primary/5 rounded-lg px-2 transition-colors`}>
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Briefcase className="h-6 w-6 text-primary" />
                   </div>
@@ -92,7 +88,7 @@ export function Experience() {
           )}
         </div>
 
-        <div ref={eduRef} className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm" style={{ opacity: 0 }}>
+        <div className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <GraduationCap className="h-5 w-5 text-accent" />
             <h2 className="text-lg font-semibold text-foreground">Education</h2>
