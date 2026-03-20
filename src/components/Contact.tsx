@@ -8,7 +8,6 @@ import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { encodeEmail, decodeEmail, obfuscateEmailDisplay } from "@/lib/email-obfuscation";
-import { useGsapFadeIn, useGsapSlideIn } from "@/hooks/useGsapAnimation";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -24,10 +23,6 @@ export function Contact() {
   const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
   const [formSubmittedAt, setFormSubmittedAt] = useState<number | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  const sectionRef = useGsapFadeIn<HTMLDivElement>();
-  const infoRef = useGsapSlideIn<HTMLDivElement>("left");
-  const formRef = useGsapSlideIn<HTMLDivElement>("right");
 
   const handleFormInteraction = () => { if (!formSubmittedAt) setFormSubmittedAt(Date.now()); };
   const encodedEmail = useMemo(() => encodeEmail(PROFILE.email), []);
@@ -65,12 +60,12 @@ export function Contact() {
   return (
     <section id="contact" className="py-4">
       <div className="max-w-4xl mx-auto px-4">
-        <div ref={sectionRef} className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm" style={{ opacity: 0 }}>
+        <div className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm">
           <h2 className="text-lg font-semibold text-foreground mb-1">Get In Touch</h2>
           <p className="text-sm text-muted-foreground mb-6">Have a project in mind? Feel free to reach out!</p>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <div ref={infoRef} className="space-y-4" style={{ opacity: 0 }}>
+            <div className="space-y-4">
               <button onClick={handleEmailClick} className="flex items-center gap-3 w-full text-left bg-transparent border-none cursor-pointer group p-3 rounded-lg hover:bg-primary/5 transition-colors" data-email={encodedEmail}>
                 <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                   <Mail className="h-4 w-4" />
@@ -102,13 +97,10 @@ export function Contact() {
               </div>
             </div>
 
-            <div ref={formRef} className="relative" style={{ opacity: 0 }}>
+            <div className="relative">
               {showSuccess && (
-                <div className="absolute inset-0 bg-card/95 z-10 flex flex-col items-center justify-center rounded-lg animate-fade-in">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
-                    <div className="relative bg-primary rounded-full p-3"><CheckCircle2 className="h-8 w-8 text-primary-foreground" /></div>
-                  </div>
+                <div className="absolute inset-0 bg-card/95 z-10 flex flex-col items-center justify-center rounded-lg">
+                  <div className="bg-primary rounded-full p-3"><CheckCircle2 className="h-8 w-8 text-primary-foreground" /></div>
                   <h3 className="text-base font-semibold mt-4">Message Sent!</h3>
                   <p className="text-sm text-muted-foreground text-center mt-1">I'll get back to you soon!</p>
                 </div>

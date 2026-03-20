@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Github, Linkedin, Mail, MapPin, ExternalLink, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROFILE, SOCIAL_LINKS } from "@/lib/constants";
@@ -8,7 +8,6 @@ import coverBanner from "@/assets/cover-banner.jpg";
 import { CVDownload } from "@/components/CVDownload";
 import { ScrollingTicker } from "@/components/ScrollingTicker";
 import { encodeEmail, decodeEmail, obfuscateEmailDisplay } from "@/lib/email-obfuscation";
-import gsap from "gsap";
 
 interface ProfileData {
   name: string;
@@ -28,14 +27,6 @@ export function Hero() {
     github_url: SOCIAL_LINKS.github, linkedin_url: SOCIAL_LINKS.linkedin, image_url: null,
   });
 
-  const heroRef = useRef<HTMLDivElement>(null);
-  const profilePicRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<HTMLHeadingElement>(null);
-  const titleRef = useRef<HTMLParagraphElement>(null);
-  const metaRef = useRef<HTMLDivElement>(null);
-  const buttonsRef = useRef<HTMLDivElement>(null);
-  const aboutRef = useRef<HTMLDivElement>(null);
-
   const encodedEmail = useMemo(() => encodeEmail(profile.email), [profile.email]);
 
   const handleEmailClick = () => {
@@ -50,20 +41,6 @@ export function Hero() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_settings' }, () => fetchProfile())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
-
-  useEffect(() => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-    
-    tl.fromTo(heroRef.current, { opacity: 0 }, { opacity: 1, duration: 0.5 })
-      .fromTo(profilePicRef.current, { scale: 0, rotation: -180 }, { scale: 1, rotation: 0, duration: 0.8 }, 0.2)
-      .fromTo(nameRef.current, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.6 }, 0.5)
-      .fromTo(titleRef.current, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5 }, 0.7)
-      .fromTo(metaRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, 0.8)
-      .fromTo(buttonsRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6 }, 0.9)
-      .fromTo(aboutRef.current, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7 }, 1.1);
-
-    return () => { tl.kill(); };
   }, []);
 
   async function fetchProfile() {
@@ -84,7 +61,7 @@ export function Hero() {
 
   return (
     <section className="pt-16">
-      <div ref={heroRef} className="max-w-4xl mx-auto" style={{ opacity: 0 }}>
+      <div className="max-w-4xl mx-auto">
         <div className="glass rounded-b-2xl overflow-hidden shadow-lg">
           {/* Cover Banner */}
           <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
@@ -94,7 +71,7 @@ export function Hero() {
 
           {/* Profile Info */}
           <div className="relative px-4 sm:px-6 md:px-8 pb-6">
-            <div ref={profilePicRef} className="relative -mt-16 sm:-mt-20 md:-mt-24 mb-4" style={{ transformOrigin: "center center" }}>
+            <div className="relative -mt-16 sm:-mt-20 md:-mt-24 mb-4">
               <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full border-4 border-card overflow-hidden bg-card shadow-xl ring-4 ring-primary/20">
                 <img src={profile.image_url || profileImage} alt={profile.name} className="w-full h-full object-cover" />
               </div>
@@ -103,13 +80,13 @@ export function Hero() {
 
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               <div className="space-y-2 flex-1">
-                <h1 ref={nameRef} className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground" style={{ opacity: 0 }}>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
                   {profile.name}
                 </h1>
-                <p ref={titleRef} className="text-sm sm:text-base text-foreground/90 font-medium" style={{ opacity: 0 }}>
+                <p className="text-sm sm:text-base text-foreground/90 font-medium">
                   {profile.title}
                 </p>
-                <div ref={metaRef} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground" style={{ opacity: 0 }}>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3.5 w-3.5" />
                     {profile.location}
@@ -124,8 +101,8 @@ export function Hero() {
                 </div>
               </div>
 
-              <div ref={buttonsRef} className="flex flex-wrap gap-2" style={{ opacity: 0 }}>
-                <Button size="sm" className="rounded-full gap-1.5 text-xs sm:text-sm glow-primary" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" className="rounded-full gap-1.5 text-xs sm:text-sm" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
                   <MessageSquare className="h-3.5 w-3.5" /> Message
                 </Button>
                 <CVDownload />
@@ -159,7 +136,7 @@ export function Hero() {
         </div>
 
         {/* About Section */}
-        <div ref={aboutRef} className="glass rounded-xl p-4 sm:p-6 md:p-8 mt-2 shadow-sm" style={{ opacity: 0 }}>
+        <div className="glass rounded-xl p-4 sm:p-6 md:p-8 mt-2 shadow-sm">
           <h2 className="text-lg font-semibold text-foreground mb-3">About</h2>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{profile.summary}</p>
         </div>

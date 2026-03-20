@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { useGsapFadeIn, useGsapStagger } from "@/hooks/useGsapAnimation";
 
 interface Project {
   id: string;
@@ -20,8 +19,6 @@ interface Project {
 export function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const sectionRef = useGsapFadeIn<HTMLDivElement>();
-  const gridRef = useGsapStagger<HTMLDivElement>(".project-card");
 
   useEffect(() => {
     fetchProjects();
@@ -47,7 +44,7 @@ export function Projects() {
   return (
     <section id="projects" className="py-4">
       <div className="max-w-4xl mx-auto px-4">
-        <div ref={sectionRef} className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm" style={{ opacity: 0 }}>
+        <div className="glass rounded-xl p-4 sm:p-6 md:p-8 shadow-sm">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-lg font-semibold text-foreground">Featured</h2>
             {projects.length > 4 && (
@@ -74,12 +71,12 @@ export function Projects() {
               <p className="text-muted-foreground">No projects yet</p>
             </div>
           ) : (
-            <div ref={gridRef} className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-4">
               {projects.slice(0, 4).map((project) => (
-                <div key={project.id} className="project-card border border-border/50 rounded-xl overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300 group hover:-translate-y-1">
+                <div key={project.id} className="border border-border/50 rounded-xl overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300 group hover:-translate-y-1">
                   <div className="relative h-36 overflow-hidden bg-muted">
                     {project.image_url ? (
-                      <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
                         <Folder className="h-12 w-12 text-muted-foreground/30" />
