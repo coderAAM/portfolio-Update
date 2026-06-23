@@ -25,7 +25,7 @@ import {
   Save,
   TrendingUp,
   Sparkles,
-  Bot,
+  
   ChevronDown,
   ChevronUp,
   Clock,
