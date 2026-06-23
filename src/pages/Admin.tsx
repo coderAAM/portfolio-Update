@@ -977,70 +977,20 @@ const Admin = () => {
                 </Button>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {projects.map((project) => (
-                  <div key={project.id} className="glass rounded-xl overflow-hidden">
-                    {project.image_url ? (
-                      <img
-                        src={project.image_url}
-                        alt={project.title}
-                        className="w-full h-32 object-cover"
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
+                <SortableContext items={projects.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {projects.map((project) => (
+                      <SortableProjectItem
+                        key={project.id}
+                        project={project}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
                       />
-                    ) : (
-                      <div className="w-full h-32 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                        <Code2 className="h-8 w-8 text-muted-foreground/50" />
-                      </div>
-                    )}
-                    <div className="p-3">
-                      <div className="flex items-start justify-between mb-2 gap-2">
-                        <h3 className="font-semibold text-sm truncate">{project.title}</h3>
-                        {project.featured && (
-                          <span className="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded-full whitespace-nowrap">
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                        {project.description}
-                      </p>
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {project.technologies.slice(0, 3).map((tech) => (
-                          <span key={tech} className="text-xs px-2 py-0.5 bg-muted rounded">
-                            {tech}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEdit(project)} className="flex-1 text-xs h-8">
-                          <Edit className="h-3 w-3 mr-1" />
-                          Edit
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive" className="text-xs h-8">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="mx-4">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Project?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(project.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
           </TabsContent>
 
