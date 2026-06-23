@@ -415,7 +415,7 @@ const Admin = () => {
         fetchProjects();
       }
     } else {
-      const { error } = await supabase.from("projects").insert([projectData]);
+      const { error } = await supabase.from("projects").insert([{ ...projectData, sort_order: projects.length }]);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
