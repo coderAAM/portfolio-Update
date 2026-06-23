@@ -69,6 +69,9 @@ export function Navbar() {
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full group-hover:w-3/4 transition-all duration-300" />
                 </button>
               ))}
+            </div>
+
+
 
 
             {/* Mobile Menu Button */}
