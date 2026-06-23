@@ -7,21 +7,13 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import InstallPWA from "@/components/InstallPWA";
-import { AIChatbot } from "@/components/AIChatbot";
-import { ParticleBackground } from "@/components/ParticleBackground";
-import { useEffect } from "react";
 import { usePageVisit } from "@/hooks/usePageVisit";
 
 const Index = () => {
   usePageVisit("/");
 
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden relative">
-      <ParticleBackground />
       <Navbar />
       <main className="overflow-x-hidden space-y-2 pb-8 relative z-10">
         <Hero />
@@ -33,7 +25,6 @@ const Index = () => {
       <Footer />
       <ThemeToggle />
       <InstallPWA />
-      <AIChatbot />
     </div>
   );
 };
