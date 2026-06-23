@@ -34,6 +34,7 @@ import { AIContentSuggestion } from "@/components/AIContentSuggestion";
 import { AIExperienceSuggestion } from "@/components/AIExperienceSuggestion";
 import { VisitorGraph } from "@/components/admin/VisitorGraph";
 import { SortableExperienceItem } from "@/components/admin/SortableExperienceItem";
+import { SortableProjectItem } from "@/components/admin/SortableProjectItem";
 import { ChatExport } from "@/components/admin/ChatExport";
 import { SkillsManager } from "@/components/admin/SkillsManager";
 import { BlogManager } from "@/components/admin/BlogManager";
