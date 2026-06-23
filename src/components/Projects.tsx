@@ -31,7 +31,7 @@ export function Projects() {
 
   async function fetchProjects() {
     try {
-      const { data, error } = await supabase.from("projects").select("*").order("featured", { ascending: false }).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("projects").select("*").order("sort_order", { ascending: true });
       if (error) throw error;
       setProjects(data || []);
     } catch (error) {
