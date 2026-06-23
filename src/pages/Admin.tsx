@@ -88,6 +88,7 @@ interface Project {
   live_url: string | null;
   featured: boolean;
   created_at: string;
+  sort_order: number;
 }
 
 interface Message {
