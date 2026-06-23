@@ -70,23 +70,23 @@ export function Hero() {
           </div>
 
           {/* Profile Info */}
-          <div className="relative px-4 sm:px-6 md:px-8 pb-6">
+          <div className="relative px-4 sm:px-6 md:px-8 pb-6 flex flex-col items-center text-center">
             <div className="relative -mt-16 sm:-mt-20 md:-mt-24 mb-4">
-              <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-full border-4 border-card overflow-hidden bg-card shadow-xl ring-4 ring-primary/20">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 rounded-full border-4 border-card overflow-hidden bg-card shadow-xl ring-4 ring-primary/20 mx-auto">
                 <img src={profile.image_url || profileImage} alt={profile.name} className="w-full h-full object-cover" />
               </div>
-              <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-0 w-4 h-4 sm:w-5 sm:h-5 bg-accent rounded-full border-2 border-card" />
+              <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 w-4 h-4 sm:w-5 sm:h-5 bg-accent rounded-full border-2 border-card" />
             </div>
 
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-              <div className="space-y-2 flex-1">
+            <div className="flex flex-col items-center gap-4 w-full">
+              <div className="space-y-2 max-w-2xl">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
                   {profile.name}
                 </h1>
                 <p className="text-sm sm:text-base text-foreground/90 font-medium">
                   {profile.title}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3.5 w-3.5" />
                     {profile.location}
@@ -96,12 +96,12 @@ export function Hero() {
                     Contact info
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-primary font-medium pt-1">
+                <div className="flex justify-center items-center gap-2 text-xs sm:text-sm text-primary font-medium pt-1">
                   <span className="hover:underline cursor-pointer">500+ connections</span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 <Button size="sm" className="rounded-full gap-1.5 text-xs sm:text-sm" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
                   <MessageSquare className="h-3.5 w-3.5" /> Message
                 </Button>
@@ -112,8 +112,9 @@ export function Hero() {
               </div>
             </div>
 
+
             {/* Social Links */}
-            <div className="flex gap-2 mt-4 pt-4 border-t border-border/50">
+            <div className="flex justify-center gap-2 mt-4 pt-4 border-t border-border/50 w-full">
               {profile.github_url && (
                 <a href={profile.github_url} target="_blank" rel="noopener noreferrer">
                   <Button variant="ghost" size="sm" className="rounded-full gap-2 text-muted-foreground hover:text-foreground hover:bg-primary/10">
@@ -133,6 +134,7 @@ export function Hero() {
               </button>
             </div>
           </div>
+
         </div>
 
         {/* About Section */}
