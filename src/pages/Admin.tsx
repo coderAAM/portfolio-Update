@@ -571,6 +571,21 @@ const Admin = () => {
     }
   };
 
+  const handleProjectDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = projects.findIndex((p) => p.id === active.id);
+      const newIndex = projects.findIndex((p) => p.id === over.id);
+      const newOrder = arrayMove(projects, oldIndex, newIndex);
+      setProjects(newOrder);
+
+      for (let i = 0; i < newOrder.length; i++) {
+        await supabase.from("projects").update({ sort_order: i }).eq("id", newOrder[i].id);
+      }
+      toast({ title: "Project order updated!" });
+    }
+  };
+
   const handleDeleteMessage = async (id: string) => {
     const { error } = await supabase.from("messages").delete().eq("id", id);
 
