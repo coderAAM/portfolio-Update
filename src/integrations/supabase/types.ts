@@ -283,6 +283,7 @@ export type Database = {
           id: string
           image_url: string | null
           live_url: string | null
+          sort_order: number
           technologies: string[]
           title: string
           updated_at: string
@@ -295,6 +296,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           live_url?: string | null
+          sort_order?: number
           technologies?: string[]
           title: string
           updated_at?: string
@@ -307,6 +309,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           live_url?: string | null
+          sort_order?: number
           technologies?: string[]
           title?: string
           updated_at?: string
