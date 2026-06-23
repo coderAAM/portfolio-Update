@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NotificationBell } from "./NotificationBell";
 
 const navLinks = [
   { href: "#about", label: "About" },
@@ -12,6 +11,7 @@ const navLinks = [
   { href: "/blog", label: "Blog", isRoute: true },
   { href: "#contact", label: "Contact" },
 ];
+
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,10 +69,10 @@ export function Navbar() {
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full group-hover:w-3/4 transition-all duration-300" />
                 </button>
               ))}
-              <div className="ml-2">
-                <NotificationBell />
-              </div>
             </div>
+
+
+
 
             {/* Mobile Menu Button */}
             <button
@@ -99,9 +99,7 @@ export function Navbar() {
                 {link.label}
               </button>
             ))}
-            <div className="mt-4 px-4">
-              <NotificationBell />
-            </div>
+
           </div>
         </div>
       )}
